@@ -129,6 +129,7 @@ stmt: decl
     | if_stmt
     | while_stmt
     | return_stmt
+    | expr SEMICOLON
     ;
 
 decl: type id_list SEMICOLON {
@@ -181,7 +182,18 @@ expr: NUMBER
     | expr MINUS expr
     | expr MULT expr
     | expr DIV expr
-    | IDENTIFIER OPENPAREN arg_list CLOSEPAREN
+    | IDENTIFIER OPENPAREN arg_list CLOSEPAREN {
+        int found = 0;
+        for (int i = 0; i < function_count; ++i) {
+            if (strcmp(function_names[i], $1) == 0) {
+                found = 1;
+                break;
+            }
+        }
+        if (!found) {
+            printf("Semantic Error: Call to undefined function: %s\n", $1);
+        }
+    }
     | OPENPAREN expr CLOSEPAREN
     ;
 

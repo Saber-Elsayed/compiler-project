@@ -43,6 +43,15 @@ int add_var_name(const char* name) {
     }
     return 1; // נוסף בהצלחה
 }
+
+int is_var_defined(const char* name) {
+    for (int i = 0; i < var_count; ++i) {
+        if (strcmp(var_names[i], name) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
 %}
 
 %left PLUS MINUS
@@ -152,8 +161,11 @@ id_list: IDENTIFIER {
     snprintf($$, len, "%s,%s", $1, $3);
 }
 
-assign_stmt: IDENTIFIER ASSIGN expr SEMICOLON
-           ;
+assign_stmt: IDENTIFIER ASSIGN expr SEMICOLON {
+    if (!is_var_defined($1)) {
+        printf("Semantic Error: Use of undefined variable: %s\n", $1);
+    }
+}
 
 if_stmt: IF condition COLON stmt
        | IF condition COLON stmt ELSE COLON stmt
@@ -177,7 +189,11 @@ type: INT
     ;
 
 expr: NUMBER
-    | IDENTIFIER
+    | IDENTIFIER {
+        if (!is_var_defined($1)) {
+            printf("Semantic Error: Use of undefined variable: %s\n", $1);
+        }
+    }
     | expr PLUS expr
     | expr MINUS expr
     | expr MULT expr

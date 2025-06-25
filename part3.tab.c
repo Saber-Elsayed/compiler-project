@@ -114,7 +114,16 @@ int add_var_name(const char* name) {
     return 1; // נוסף בהצלחה
 }
 
-#line 118 "part3.tab.c"
+int is_var_defined(const char* name) {
+    for (int i = 0; i < var_count; ++i) {
+        if (strcmp(var_names[i], name) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+#line 127 "part3.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -580,11 +589,11 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    67,    67,    70,    71,    74,    83,    95,   102,   114,
-     115,   116,   119,   120,   123,   124,   127,   128,   129,   130,
-     131,   132,   135,   146,   149,   155,   158,   159,   161,   164,
-     167,   168,   169,   170,   171,   172,   175,   176,   179,   180,
-     181,   182,   183,   184,   185,   197,   200,   201,   202
+       0,    76,    76,    79,    80,    83,    92,   104,   111,   123,
+     124,   125,   128,   129,   132,   133,   136,   137,   138,   139,
+     140,   141,   144,   155,   158,   164,   170,   171,   173,   176,
+     179,   180,   181,   182,   183,   184,   187,   188,   191,   192,
+     197,   198,   199,   200,   201,   213,   216,   217,   218
 };
 #endif
 
@@ -1216,13 +1225,13 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* program: function_list  */
-#line 67 "part3.y"
+#line 76 "part3.y"
                        { printf("Parsing OK\n"); }
-#line 1222 "part3.tab.c"
+#line 1231 "part3.tab.c"
     break;
 
   case 5: /* function: DEF IDENTIFIER OPENPAREN param_list CLOSEPAREN ARROW type COLON OPENBRACE stmts CLOSEBRACE  */
-#line 74 "part3.y"
+#line 83 "part3.y"
                                                                                                      {
     reset_var_table();
     if (strcmp((yyvsp[-9].str), "__main__") == 0) {
@@ -1232,11 +1241,11 @@ yyreduce:
         printf("Semantic Error: Duplicate function name: %s\n", (yyvsp[-9].str));
     }
 }
-#line 1236 "part3.tab.c"
+#line 1245 "part3.tab.c"
     break;
 
   case 6: /* function: DEF IDENTIFIER OPENPAREN CLOSEPAREN COLON OPENBRACE stmts CLOSEBRACE  */
-#line 83 "part3.y"
+#line 92 "part3.y"
                                                                        {
     reset_var_table();
     if (strcmp((yyvsp[-6].str), "__main__") == 0) {
@@ -1249,11 +1258,11 @@ yyreduce:
         printf("Semantic Error: Duplicate function name: %s\n", (yyvsp[-6].str));
     }
 }
-#line 1253 "part3.tab.c"
+#line 1262 "part3.tab.c"
     break;
 
   case 7: /* function: DEF MAIN OPENPAREN param_list CLOSEPAREN ARROW type COLON OPENBRACE stmts CLOSEBRACE  */
-#line 95 "part3.y"
+#line 104 "part3.y"
                                                                                        {
     reset_var_table();
     printf("Semantic Error: main/__main__ must not have parameters or return type\n");
@@ -1261,11 +1270,11 @@ yyreduce:
         printf("Semantic Error: Duplicate function name: main\n");
     }
 }
-#line 1265 "part3.tab.c"
+#line 1274 "part3.tab.c"
     break;
 
   case 8: /* function: DEF MAIN OPENPAREN CLOSEPAREN COLON OPENBRACE stmts CLOSEBRACE  */
-#line 102 "part3.y"
+#line 111 "part3.y"
                                                                  {
     reset_var_table();
     main_count++;
@@ -1276,11 +1285,11 @@ yyreduce:
         printf("Semantic Error: Duplicate function name: main\n");
     }
 }
-#line 1280 "part3.tab.c"
+#line 1289 "part3.tab.c"
     break;
 
   case 22: /* decl: type id_list SEMICOLON  */
-#line 135 "part3.y"
+#line 144 "part3.y"
                              {
     char* ids = (yyvsp[-1].str);
     char* token = strtok(ids, ",");
@@ -1291,29 +1300,49 @@ yyreduce:
         token = strtok(NULL, ",");
     }
 }
-#line 1295 "part3.tab.c"
+#line 1304 "part3.tab.c"
     break;
 
   case 23: /* id_list: IDENTIFIER  */
-#line 146 "part3.y"
+#line 155 "part3.y"
                     {
     (yyval.str) = strdup((yyvsp[0].str));
 }
-#line 1303 "part3.tab.c"
+#line 1312 "part3.tab.c"
     break;
 
   case 24: /* id_list: IDENTIFIER COMMA id_list  */
-#line 149 "part3.y"
+#line 158 "part3.y"
                            {
     int len = strlen((yyvsp[-2].str)) + strlen((yyvsp[0].str)) + 2;
     (yyval.str) = malloc(len);
     snprintf((yyval.str), len, "%s,%s", (yyvsp[-2].str), (yyvsp[0].str));
 }
-#line 1313 "part3.tab.c"
+#line 1322 "part3.tab.c"
+    break;
+
+  case 25: /* assign_stmt: IDENTIFIER ASSIGN expr SEMICOLON  */
+#line 164 "part3.y"
+                                              {
+    if (!is_var_defined((yyvsp[-3].str))) {
+        printf("Semantic Error: Use of undefined variable: %s\n", (yyvsp[-3].str));
+    }
+}
+#line 1332 "part3.tab.c"
+    break;
+
+  case 39: /* expr: IDENTIFIER  */
+#line 192 "part3.y"
+                 {
+        if (!is_var_defined((yyvsp[0].str))) {
+            printf("Semantic Error: Use of undefined variable: %s\n", (yyvsp[0].str));
+        }
+    }
+#line 1342 "part3.tab.c"
     break;
 
   case 44: /* expr: IDENTIFIER OPENPAREN arg_list CLOSEPAREN  */
-#line 185 "part3.y"
+#line 201 "part3.y"
                                                {
         int found = 0;
         for (int i = 0; i < function_count; ++i) {
@@ -1326,11 +1355,11 @@ yyreduce:
             printf("Semantic Error: Call to undefined function: %s\n", (yyvsp[-3].str));
         }
     }
-#line 1330 "part3.tab.c"
+#line 1359 "part3.tab.c"
     break;
 
 
-#line 1334 "part3.tab.c"
+#line 1363 "part3.tab.c"
 
       default: break;
     }
@@ -1523,7 +1552,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 204 "part3.y"
+#line 220 "part3.y"
 
 int main() {
     yyparse();

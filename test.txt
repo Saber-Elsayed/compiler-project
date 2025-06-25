@@ -1,8 +1,10 @@
 
 
 def __main__():{
+     a = 0;
     int a, b;
-    a = 0;
+     a = 0;
+
     while a < 10: {
         b = foo(3.14);
         a = a + b;

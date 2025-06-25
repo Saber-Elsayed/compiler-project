@@ -1,6 +1,8 @@
 %{
 #include <stdio.h>
+#include <string.h>
 #include "part3.tab.h"
+#define _GNU_SOURCE
 int yylex();
 int yyerror(char *s) { printf("Error: %s\n", s); return 0; }
 int main_count = 0;
@@ -46,7 +48,7 @@ int add_var_name(const char* name) {
 %left PLUS MINUS
 %left MULT DIV
 %left EQ NEQ LT GT LEQ GEQ
-%token DEF MAIN FLOAT INT IDENTIFIER NUMBER
+%token DEF MAIN FLOAT INT NUMBER
 %token OPENPAREN CLOSEPAREN OPENBRACE CLOSEBRACE COLON ARROW SEMICOLON COMMA
 %token ASSIGN PLUS MINUS MULT DIV
 %token IF ELSE EQ NEQ LT GT LEQ GEQ
@@ -57,6 +59,9 @@ int add_var_name(const char* name) {
     int ival;
 }
 %token <str> IDENTIFIER
+
+%type <str> id_list
+%type <str> decl
 
 %%
 program: function_list { printf("Parsing OK\n"); }
@@ -189,3 +194,4 @@ int main() {
     yyparse();
     return 0;
 }
+

@@ -1,5 +1,5 @@
 def foo(float x) -> int: {
-    int a, b;
+    int a, b, a;
     a = 23;
     if a == 23:
         b = 10;
@@ -7,11 +7,9 @@ def foo(float x) -> int: {
         b = 19;
     return b + a;
 }
-def hii():{
 
-}
 def foo():{
-    
+
 }
 
 def __main__():{

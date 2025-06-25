@@ -1939,3 +1939,6 @@ void yyfree (void * ptr )
 
 #line 38 "part3.l"
 
+
+int yywrap(void) { return 1; }
+

@@ -58,31 +58,31 @@ extern int yydebug;
     MAIN = 259,                    /* MAIN  */
     FLOAT = 260,                   /* FLOAT  */
     INT = 261,                     /* INT  */
-    IDENTIFIER = 262,              /* IDENTIFIER  */
-    NUMBER = 263,                  /* NUMBER  */
-    OPENPAREN = 264,               /* OPENPAREN  */
-    CLOSEPAREN = 265,              /* CLOSEPAREN  */
-    OPENBRACE = 266,               /* OPENBRACE  */
-    CLOSEBRACE = 267,              /* CLOSEBRACE  */
-    COLON = 268,                   /* COLON  */
-    ARROW = 269,                   /* ARROW  */
-    SEMICOLON = 270,               /* SEMICOLON  */
-    COMMA = 271,                   /* COMMA  */
-    ASSIGN = 272,                  /* ASSIGN  */
-    PLUS = 273,                    /* PLUS  */
-    MINUS = 274,                   /* MINUS  */
-    MULT = 275,                    /* MULT  */
-    DIV = 276,                     /* DIV  */
-    IF = 277,                      /* IF  */
-    ELSE = 278,                    /* ELSE  */
-    EQ = 279,                      /* EQ  */
-    NEQ = 280,                     /* NEQ  */
-    LT = 281,                      /* LT  */
-    GT = 282,                      /* GT  */
-    LEQ = 283,                     /* LEQ  */
-    GEQ = 284,                     /* GEQ  */
-    RETURN = 285,                  /* RETURN  */
-    WHILE = 286                    /* WHILE  */
+    NUMBER = 262,                  /* NUMBER  */
+    OPENPAREN = 263,               /* OPENPAREN  */
+    CLOSEPAREN = 264,              /* CLOSEPAREN  */
+    OPENBRACE = 265,               /* OPENBRACE  */
+    CLOSEBRACE = 266,              /* CLOSEBRACE  */
+    COLON = 267,                   /* COLON  */
+    ARROW = 268,                   /* ARROW  */
+    SEMICOLON = 269,               /* SEMICOLON  */
+    COMMA = 270,                   /* COMMA  */
+    ASSIGN = 271,                  /* ASSIGN  */
+    PLUS = 272,                    /* PLUS  */
+    MINUS = 273,                   /* MINUS  */
+    MULT = 274,                    /* MULT  */
+    DIV = 275,                     /* DIV  */
+    IF = 276,                      /* IF  */
+    ELSE = 277,                    /* ELSE  */
+    EQ = 278,                      /* EQ  */
+    NEQ = 279,                     /* NEQ  */
+    LT = 280,                      /* LT  */
+    GT = 281,                      /* GT  */
+    LEQ = 282,                     /* LEQ  */
+    GEQ = 283,                     /* GEQ  */
+    RETURN = 284,                  /* RETURN  */
+    WHILE = 285,                   /* WHILE  */
+    IDENTIFIER = 286               /* IDENTIFIER  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -91,7 +91,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 33 "part3.y"
+#line 57 "part3.y"
 
     char* str;
     int ival;

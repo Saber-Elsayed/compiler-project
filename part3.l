@@ -36,3 +36,5 @@
 [ \t\n]+        ;
 .               { printf("Unknown: %s\n", yytext); }
 %%
+
+int yywrap(void) { return 1; }

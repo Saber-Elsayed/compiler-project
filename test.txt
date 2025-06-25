@@ -1,0 +1,25 @@
+def foo(float x) -> int: {
+    int a, b;
+    a = 23;
+    if a == 23:
+        b = 10;
+    else:
+        b = 19;
+    return b + a;
+}
+def hii():{
+
+}
+def foo():{
+    
+}
+
+def __main__():{
+    int a, b;
+    a = 0;
+    while a < 10: {
+        b = foo(3.14);
+        a = a + b;
+    }
+}
+

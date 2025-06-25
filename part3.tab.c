@@ -78,19 +78,22 @@ int yyerror(char *s) { printf("Error: %s\n", s); return 0; }
 int main_count = 0;
 #define MAX_FUNCS 100
 char* function_names[MAX_FUNCS];
+int function_param_count[MAX_FUNCS];
 int function_count = 0;
 #define MAX_VARS 100
 char* var_names[MAX_VARS];
 int var_count = 0;
 
-int add_function_name(const char* name) {
+int add_function_name(const char* name, int param_count) {
     for (int i = 0; i < function_count; ++i) {
         if (strcmp(function_names[i], name) == 0) {
             return 0; // קיים כבר
         }
     }
     if (function_count < MAX_FUNCS) {
-        function_names[function_count++] = strdup(name);
+        function_names[function_count] = strdup(name);
+        function_param_count[function_count] = param_count;
+        function_count++;
     }
     return 1; // נוסף בהצלחה
 }
@@ -123,7 +126,25 @@ int is_var_defined(const char* name) {
     return 0;
 }
 
-#line 127 "part3.tab.c"
+int count_params(char* ids) {
+    if (!ids || strlen(ids) == 0) return 0;
+    int count = 1;
+    for (char* p = ids; *p; ++p) {
+        if (*p == ',') count++;
+    }
+    return count;
+}
+
+int count_args(char* ids) {
+    if (!ids || strlen(ids) == 0) return 0;
+    int count = 1;
+    for (char* p = ids; *p; ++p) {
+        if (*p == ',') count++;
+    }
+    return count;
+}
+
+#line 148 "part3.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -587,13 +608,13 @@ static const yytype_int8 yytranslate[] =
 
 #if YYDEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
-static const yytype_uint8 yyrline[] =
+static const yytype_int16 yyrline[] =
 {
-       0,    76,    76,    79,    80,    83,    92,   104,   111,   123,
-     124,   125,   128,   129,   132,   133,   136,   137,   138,   139,
-     140,   141,   144,   155,   158,   164,   170,   171,   173,   176,
-     179,   180,   181,   182,   183,   184,   187,   188,   191,   192,
-     197,   198,   199,   200,   201,   213,   216,   217,   218
+       0,    98,    98,   101,   102,   105,   115,   128,   136,   149,
+     150,   151,   154,   155,   158,   159,   162,   163,   164,   165,
+     166,   167,   170,   181,   184,   190,   196,   197,   199,   202,
+     205,   206,   207,   208,   209,   210,   213,   214,   217,   218,
+     223,   224,   225,   226,   227,   244,   247,   251,   256
 };
 #endif
 
@@ -1225,71 +1246,75 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* program: function_list  */
-#line 76 "part3.y"
+#line 98 "part3.y"
                        { printf("Parsing OK\n"); }
-#line 1231 "part3.tab.c"
+#line 1252 "part3.tab.c"
     break;
 
   case 5: /* function: DEF IDENTIFIER OPENPAREN param_list CLOSEPAREN ARROW type COLON OPENBRACE stmts CLOSEBRACE  */
-#line 83 "part3.y"
+#line 105 "part3.y"
                                                                                                      {
     reset_var_table();
+    int paramc = count_params((yyvsp[-7].str));
     if (strcmp((yyvsp[-9].str), "__main__") == 0) {
         printf("Semantic Error: main/__main__ must not have parameters or return type\n");
     }
-    if (!add_function_name((yyvsp[-9].str))) {
+    if (!add_function_name((yyvsp[-9].str), paramc)) {
         printf("Semantic Error: Duplicate function name: %s\n", (yyvsp[-9].str));
     }
 }
-#line 1245 "part3.tab.c"
+#line 1267 "part3.tab.c"
     break;
 
   case 6: /* function: DEF IDENTIFIER OPENPAREN CLOSEPAREN COLON OPENBRACE stmts CLOSEBRACE  */
-#line 92 "part3.y"
+#line 115 "part3.y"
                                                                        {
     reset_var_table();
+    int paramc = 0;
     if (strcmp((yyvsp[-6].str), "__main__") == 0) {
         main_count++;
         if (main_count > 1) {
             printf("Semantic Error: Multiple definitions of main\n");
         }
     }
-    if (!add_function_name((yyvsp[-6].str))) {
+    if (!add_function_name((yyvsp[-6].str), paramc)) {
         printf("Semantic Error: Duplicate function name: %s\n", (yyvsp[-6].str));
     }
 }
-#line 1262 "part3.tab.c"
+#line 1285 "part3.tab.c"
     break;
 
   case 7: /* function: DEF MAIN OPENPAREN param_list CLOSEPAREN ARROW type COLON OPENBRACE stmts CLOSEBRACE  */
-#line 104 "part3.y"
+#line 128 "part3.y"
                                                                                        {
     reset_var_table();
+    int paramc = count_params((yyvsp[-7].str));
     printf("Semantic Error: main/__main__ must not have parameters or return type\n");
-    if (!add_function_name("main")) {
+    if (!add_function_name("main", paramc)) {
         printf("Semantic Error: Duplicate function name: main\n");
     }
 }
-#line 1274 "part3.tab.c"
+#line 1298 "part3.tab.c"
     break;
 
   case 8: /* function: DEF MAIN OPENPAREN CLOSEPAREN COLON OPENBRACE stmts CLOSEBRACE  */
-#line 111 "part3.y"
+#line 136 "part3.y"
                                                                  {
     reset_var_table();
+    int paramc = 0;
     main_count++;
     if (main_count > 1) {
         printf("Semantic Error: Multiple definitions of main\n");
     }
-    if (!add_function_name("main")) {
+    if (!add_function_name("main", paramc)) {
         printf("Semantic Error: Duplicate function name: main\n");
     }
 }
-#line 1289 "part3.tab.c"
+#line 1314 "part3.tab.c"
     break;
 
   case 22: /* decl: type id_list SEMICOLON  */
-#line 144 "part3.y"
+#line 170 "part3.y"
                              {
     char* ids = (yyvsp[-1].str);
     char* token = strtok(ids, ",");
@@ -1300,66 +1325,98 @@ yyreduce:
         token = strtok(NULL, ",");
     }
 }
-#line 1304 "part3.tab.c"
+#line 1329 "part3.tab.c"
     break;
 
   case 23: /* id_list: IDENTIFIER  */
-#line 155 "part3.y"
+#line 181 "part3.y"
                     {
     (yyval.str) = strdup((yyvsp[0].str));
 }
-#line 1312 "part3.tab.c"
+#line 1337 "part3.tab.c"
     break;
 
   case 24: /* id_list: IDENTIFIER COMMA id_list  */
-#line 158 "part3.y"
+#line 184 "part3.y"
                            {
     int len = strlen((yyvsp[-2].str)) + strlen((yyvsp[0].str)) + 2;
     (yyval.str) = malloc(len);
     snprintf((yyval.str), len, "%s,%s", (yyvsp[-2].str), (yyvsp[0].str));
 }
-#line 1322 "part3.tab.c"
+#line 1347 "part3.tab.c"
     break;
 
   case 25: /* assign_stmt: IDENTIFIER ASSIGN expr SEMICOLON  */
-#line 164 "part3.y"
+#line 190 "part3.y"
                                               {
     if (!is_var_defined((yyvsp[-3].str))) {
         printf("Semantic Error: Use of undefined variable: %s\n", (yyvsp[-3].str));
     }
 }
-#line 1332 "part3.tab.c"
+#line 1357 "part3.tab.c"
     break;
 
   case 39: /* expr: IDENTIFIER  */
-#line 192 "part3.y"
+#line 218 "part3.y"
                  {
         if (!is_var_defined((yyvsp[0].str))) {
             printf("Semantic Error: Use of undefined variable: %s\n", (yyvsp[0].str));
         }
     }
-#line 1342 "part3.tab.c"
+#line 1367 "part3.tab.c"
     break;
 
   case 44: /* expr: IDENTIFIER OPENPAREN arg_list CLOSEPAREN  */
-#line 201 "part3.y"
+#line 227 "part3.y"
                                                {
         int found = 0;
+        int paramc = 0;
+        int argc = count_args((yyvsp[-1].str));
         for (int i = 0; i < function_count; ++i) {
             if (strcmp(function_names[i], (yyvsp[-3].str)) == 0) {
                 found = 1;
+                paramc = function_param_count[i];
                 break;
             }
         }
         if (!found) {
             printf("Semantic Error: Call to undefined function: %s\n", (yyvsp[-3].str));
+        } else if (argc > paramc) {
+            printf("Semantic Error: Too many arguments in call to function: %s\n", (yyvsp[-3].str));
         }
     }
-#line 1359 "part3.tab.c"
+#line 1389 "part3.tab.c"
+    break;
+
+  case 46: /* arg_list: expr  */
+#line 247 "part3.y"
+               {
+    (yyval.str) = strdup("");
+    strcat((yyval.str), "1");
+}
+#line 1398 "part3.tab.c"
+    break;
+
+  case 47: /* arg_list: expr COMMA arg_list  */
+#line 251 "part3.y"
+                      {
+    (yyval.str) = strdup("");
+    strcat((yyval.str), "1,");
+    strcat((yyval.str), (yyvsp[0].str));
+}
+#line 1408 "part3.tab.c"
+    break;
+
+  case 48: /* arg_list: %empty  */
+#line 256 "part3.y"
+              {
+    (yyval.str) = strdup("");
+}
+#line 1416 "part3.tab.c"
     break;
 
 
-#line 1363 "part3.tab.c"
+#line 1420 "part3.tab.c"
 
       default: break;
     }
@@ -1552,7 +1609,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 220 "part3.y"
+#line 259 "part3.y"
 
 int main() {
     yyparse();

@@ -8,19 +8,22 @@ int yyerror(char *s) { printf("Error: %s\n", s); return 0; }
 int main_count = 0;
 #define MAX_FUNCS 100
 char* function_names[MAX_FUNCS];
+int function_param_count[MAX_FUNCS];
 int function_count = 0;
 #define MAX_VARS 100
 char* var_names[MAX_VARS];
 int var_count = 0;
 
-int add_function_name(const char* name) {
+int add_function_name(const char* name, int param_count) {
     for (int i = 0; i < function_count; ++i) {
         if (strcmp(function_names[i], name) == 0) {
             return 0; // קיים כבר
         }
     }
     if (function_count < MAX_FUNCS) {
-        function_names[function_count++] = strdup(name);
+        function_names[function_count] = strdup(name);
+        function_param_count[function_count] = param_count;
+        function_count++;
     }
     return 1; // נוסף בהצלחה
 }
@@ -52,6 +55,24 @@ int is_var_defined(const char* name) {
     }
     return 0;
 }
+
+int count_params(char* ids) {
+    if (!ids || strlen(ids) == 0) return 0;
+    int count = 1;
+    for (char* p = ids; *p; ++p) {
+        if (*p == ',') count++;
+    }
+    return count;
+}
+
+int count_args(char* ids) {
+    if (!ids || strlen(ids) == 0) return 0;
+    int count = 1;
+    for (char* p = ids; *p; ++p) {
+        if (*p == ',') count++;
+    }
+    return count;
+}
 %}
 
 %left PLUS MINUS
@@ -71,7 +92,8 @@ int is_var_defined(const char* name) {
 
 %type <str> id_list
 %type <str> decl
-
+%type <str> param_list
+%type <str> arg_list
 %%
 program: function_list { printf("Parsing OK\n"); }
        ;
@@ -82,39 +104,43 @@ function_list: function_list function
 
 function: DEF IDENTIFIER OPENPAREN param_list CLOSEPAREN ARROW type COLON OPENBRACE stmts CLOSEBRACE {
     reset_var_table();
+    int paramc = count_params($4);
     if (strcmp($2, "__main__") == 0) {
         printf("Semantic Error: main/__main__ must not have parameters or return type\n");
     }
-    if (!add_function_name($2)) {
+    if (!add_function_name($2, paramc)) {
         printf("Semantic Error: Duplicate function name: %s\n", $2);
     }
 }
 | DEF IDENTIFIER OPENPAREN CLOSEPAREN COLON OPENBRACE stmts CLOSEBRACE {
     reset_var_table();
+    int paramc = 0;
     if (strcmp($2, "__main__") == 0) {
         main_count++;
         if (main_count > 1) {
             printf("Semantic Error: Multiple definitions of main\n");
         }
     }
-    if (!add_function_name($2)) {
+    if (!add_function_name($2, paramc)) {
         printf("Semantic Error: Duplicate function name: %s\n", $2);
     }
 }
 | DEF MAIN OPENPAREN param_list CLOSEPAREN ARROW type COLON OPENBRACE stmts CLOSEBRACE {
     reset_var_table();
+    int paramc = count_params($4);
     printf("Semantic Error: main/__main__ must not have parameters or return type\n");
-    if (!add_function_name("main")) {
+    if (!add_function_name("main", paramc)) {
         printf("Semantic Error: Duplicate function name: main\n");
     }
 }
 | DEF MAIN OPENPAREN CLOSEPAREN COLON OPENBRACE stmts CLOSEBRACE {
     reset_var_table();
+    int paramc = 0;
     main_count++;
     if (main_count > 1) {
         printf("Semantic Error: Multiple definitions of main\n");
     }
-    if (!add_function_name("main")) {
+    if (!add_function_name("main", paramc)) {
         printf("Semantic Error: Duplicate function name: main\n");
     }
 }
@@ -200,23 +226,36 @@ expr: NUMBER
     | expr DIV expr
     | IDENTIFIER OPENPAREN arg_list CLOSEPAREN {
         int found = 0;
+        int paramc = 0;
+        int argc = count_args($3);
         for (int i = 0; i < function_count; ++i) {
             if (strcmp(function_names[i], $1) == 0) {
                 found = 1;
+                paramc = function_param_count[i];
                 break;
             }
         }
         if (!found) {
             printf("Semantic Error: Call to undefined function: %s\n", $1);
+        } else if (argc > paramc) {
+            printf("Semantic Error: Too many arguments in call to function: %s\n", $1);
         }
     }
     | OPENPAREN expr CLOSEPAREN
     ;
 
-arg_list: expr
-        | expr COMMA arg_list
-        | /* empty */
-        ;
+arg_list: expr {
+    $$ = strdup("");
+    strcat($$, "1");
+}
+| expr COMMA arg_list {
+    $$ = strdup("");
+    strcat($$, "1,");
+    strcat($$, $3);
+}
+| /* empty */ {
+    $$ = strdup("");
+}
 %%
 int main() {
     yyparse();

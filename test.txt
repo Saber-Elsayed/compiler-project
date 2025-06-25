@@ -1,15 +1,4 @@
 
-
-def __main__():{
-     a = 0;
-    int a, b;
-     a = 0;
-
-    while a < 10: {
-        b = foo(3.14);
-        a = a + b;
-    }
-}
 def foo(float x) -> int: {
     int a, b, a, b;
     a = 23;
@@ -18,5 +7,16 @@ def foo(float x) -> int: {
     else:
         b = 19;
     return b + a;
+}
+
+def __main__():{
+     a = 0;
+    int a, b;
+     a = 0;
+
+    while a < 10: {
+        b = foo(3.14, 3.2);
+        a = a + b;
+    }
 }
 

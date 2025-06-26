@@ -97,6 +97,7 @@ int count_args(char* ids) {
 %token IF ELSE EQ NEQ LT GT LEQ GEQ
 %token RETURN WHILE
 %token BOOL TRUE FALSE AND OR
+%token NOT
 
 %union {
     char* str;
@@ -248,6 +249,30 @@ expr: NUMBER { $$ = $1; }
             $$ = 0; // ברירת מחדל
         } else {
             $$ = get_var_type($1);
+        }
+    }
+    | expr EQ expr {
+        if ($1 == $3) {
+            $$ = 5;
+        } else {
+            printf("Semantic Error: Operand types for '==' must match\n");
+            $$ = 5;
+        }
+    }
+    | expr NEQ expr {
+        if ($1 == $3) {
+            $$ = 5;
+        } else {
+            printf("Semantic Error: Operand types for '!=' must match\n");
+            $$ = 5;
+        }
+    }
+    | NOT expr {
+        if ($2 == 5) {
+            $$ = 5;
+        } else {
+            printf("Semantic Error: 'not' operator requires bool operand\n");
+            $$ = 5;
         }
     }
     | expr PLUS expr {

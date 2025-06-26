@@ -1,5 +1,11 @@
 
 def foo(float x) -> int: {
+int a; float b; string s; bool f;
+if a == b:      
+if s != a:       
+if f == false:  
+f = not f;      
+a = not a;
     bool ch;
     int e;
     e=9;

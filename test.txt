@@ -1,5 +1,10 @@
 
 def foo(float x) -> int: {
+    bool ch;
+    int e;
+    e=9;
+    bool result;
+    result=ch and e;
     int a, b, a, b;
     string s;
     s="hello";

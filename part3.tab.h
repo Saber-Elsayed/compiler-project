@@ -85,7 +85,12 @@ extern int yydebug;
     GEQ = 286,                     /* GEQ  */
     RETURN = 287,                  /* RETURN  */
     WHILE = 288,                   /* WHILE  */
-    IDENTIFIER = 289               /* IDENTIFIER  */
+    BOOL = 289,                    /* BOOL  */
+    TRUE = 290,                    /* TRUE  */
+    FALSE = 291,                   /* FALSE  */
+    AND = 292,                     /* AND  */
+    OR = 293,                      /* OR  */
+    IDENTIFIER = 294               /* IDENTIFIER  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -94,13 +99,13 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 100 "part3.y"
+#line 101 "part3.y"
 
     char* str;
     int ival;
     int type; // 0=int, 1=float
 
-#line 104 "part3.tab.h"
+#line 109 "part3.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

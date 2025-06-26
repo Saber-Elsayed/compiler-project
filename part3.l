@@ -15,6 +15,11 @@
 "string"        { printf("LEX: %s\n", yytext); return STRING; }
 "char"          { printf("LEX: %s\n", yytext); return CHAR; }
 "u"             { printf("LEX: %s\n", yytext); return USTRING; }
+"bool"          { printf("LEX: %s\n", yytext); return BOOL; }
+"true"          { yylval.type = 5; printf("LEX: %s\n", yytext); return TRUE; }
+"false"         { yylval.type = 5; printf("LEX: %s\n", yytext); return FALSE; }
+"and"           { printf("LEX: %s\n", yytext); return AND; }
+"or"            { printf("LEX: %s\n", yytext); return OR; }
      [a-zA-Z_][a-zA-Z0-9_]*  { yylval.str = strdup(yytext); return IDENTIFIER; }
 [0-9]+\.[0-9]+    { yylval.type = 1; printf("LEX: %s\n", yytext); return NUMBER; }
 [0-9]+            { yylval.type = 0; printf("LEX: %s\n", yytext); return NUMBER; }

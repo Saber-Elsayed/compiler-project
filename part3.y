@@ -96,6 +96,7 @@ int count_args(char* ids) {
 %token ASSIGN PLUS MINUS MULT DIV
 %token IF ELSE EQ NEQ LT GT LEQ GEQ
 %token RETURN WHILE
+%token BOOL TRUE FALSE AND OR
 
 %union {
     char* str;
@@ -237,12 +238,15 @@ type: INT { $$ = 0; }
     | STRING { $$ = 2; }
     | CHAR { $$ = 3; }
     | USTRING { $$ = 4; }
+    | BOOL { $$ = 5; }
     ;
 
 expr: NUMBER { $$ = $1; }
     | STRING { $$ = 2; }
     | CHAR { $$ = 3; }
     | USTRING { $$ = 4; }
+    | TRUE { $$ = 5; }
+    | FALSE { $$ = 5; }
     | IDENTIFIER {
         if (!is_var_defined($1)) {
             printf("Semantic Error: Use of undefined variable: %s\n", $1);
@@ -289,6 +293,22 @@ expr: NUMBER { $$ = $1; }
         } else {
             printf("Semantic Error: Invalid operand types for '/'\n");
             $$ = 1;
+        }
+    }
+    | expr AND expr {
+        if ($1 == 5 && $3 == 5) {
+            $$ = 5;
+        } else {
+            printf("Semantic Error: Invalid operand types for 'and' (must be bool)\n");
+            $$ = 5;
+        }
+    }
+    | expr OR expr {
+        if ($1 == 5 && $3 == 5) {
+            $$ = 5;
+        } else {
+            printf("Semantic Error: Invalid operand types for 'or' (must be bool)\n");
+            $$ = 5;
         }
     }
     | IDENTIFIER OPENPAREN arg_list CLOSEPAREN {

@@ -252,18 +252,45 @@ expr: NUMBER { $$ = $1; }
         }
     }
     | expr PLUS expr {
-        // חיבור מחרוזות/יוניקוד/מספרים
-        if ($1 == 2 && $3 == 2) $$ = 2;
-        else if ($1 == 4 && $3 == 4) $$ = 4;
-        else if (($1 == 2 && $3 == 4) || ($1 == 4 && $3 == 2)) $$ = 2; // string+ustring=>string
-        else if ($1 == 3 && $3 == 3) $$ = 2; // char+char=>string
-        else if ($1 == 0 && $3 == 0) $$ = 0;
-        else if ($1 == 1 || $3 == 1) $$ = 1;
-        else $$ = 0;
+        if (($1 == 0 || $1 == 1) && ($3 == 0 || $3 == 1)) {
+            $$ = ($1 == 0 && $3 == 0) ? 0 : 1;
+        } else if ($1 == 2 && $3 == 2) {
+            $$ = 2; // string + string
+        } else if ($1 == 4 && $3 == 4) {
+            $$ = 4; // ustring + ustring
+        } else if (($1 == 2 && $3 == 4) || ($1 == 4 && $3 == 2)) {
+            $$ = 2; // string + ustring
+        } else if ($1 == 3 && $3 == 3) {
+            $$ = 2; // char + char
+        } else {
+            printf("Semantic Error: Invalid operand types for '+'\n");
+            $$ = 0;
+        }
     }
-    | expr MINUS expr { $$ = ($1 == 1 || $3 == 1) ? 1 : 0; }
-    | expr MULT expr { $$ = ($1 == 1 || $3 == 1) ? 1 : 0; }
-    | expr DIV expr { $$ = 1; }
+    | expr MINUS expr {
+        if (($1 == 0 || $1 == 1) && ($3 == 0 || $3 == 1)) {
+            $$ = ($1 == 0 && $3 == 0) ? 0 : 1;
+        } else {
+            printf("Semantic Error: Invalid operand types for '-'\n");
+            $$ = 0;
+        }
+    }
+    | expr MULT expr {
+        if (($1 == 0 || $1 == 1) && ($3 == 0 || $3 == 1)) {
+            $$ = ($1 == 0 && $3 == 0) ? 0 : 1;
+        } else {
+            printf("Semantic Error: Invalid operand types for '*'\n");
+            $$ = 0;
+        }
+    }
+    | expr DIV expr {
+        if (($1 == 0 || $1 == 1) && ($3 == 0 || $3 == 1)) {
+            $$ = 1; // חילוק תמיד מחזיר float
+        } else {
+            printf("Semantic Error: Invalid operand types for '/'\n");
+            $$ = 1;
+        }
+    }
     | IDENTIFIER OPENPAREN arg_list CLOSEPAREN {
         int found = 0;
         int paramc = 0;

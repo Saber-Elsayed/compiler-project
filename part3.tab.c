@@ -629,8 +629,8 @@ static const yytype_int16 yyrline[] =
      166,   167,   170,   171,   174,   175,   178,   179,   180,   181,
      182,   183,   186,   197,   200,   206,   218,   219,   221,   224,
      227,   228,   229,   230,   231,   232,   235,   236,   237,   238,
-     239,   242,   243,   244,   245,   246,   254,   264,   265,   266,
-     267,   285,   288,   292,   297
+     239,   242,   243,   244,   245,   246,   254,   270,   278,   286,
+     294,   312,   315,   319,   324
 };
 #endif
 
@@ -1455,38 +1455,65 @@ yyreduce:
   case 46: /* expr: expr PLUS expr  */
 #line 254 "part3.y"
                      {
-        // חיבור מחרוזות/יוניקוד/מספרים
-        if ((yyvsp[-2].type) == 2 && (yyvsp[0].type) == 2) (yyval.type) = 2;
-        else if ((yyvsp[-2].type) == 4 && (yyvsp[0].type) == 4) (yyval.type) = 4;
-        else if (((yyvsp[-2].type) == 2 && (yyvsp[0].type) == 4) || ((yyvsp[-2].type) == 4 && (yyvsp[0].type) == 2)) (yyval.type) = 2; // string+ustring=>string
-        else if ((yyvsp[-2].type) == 3 && (yyvsp[0].type) == 3) (yyval.type) = 2; // char+char=>string
-        else if ((yyvsp[-2].type) == 0 && (yyvsp[0].type) == 0) (yyval.type) = 0;
-        else if ((yyvsp[-2].type) == 1 || (yyvsp[0].type) == 1) (yyval.type) = 1;
-        else (yyval.type) = 0;
+        if (((yyvsp[-2].type) == 0 || (yyvsp[-2].type) == 1) && ((yyvsp[0].type) == 0 || (yyvsp[0].type) == 1)) {
+            (yyval.type) = ((yyvsp[-2].type) == 0 && (yyvsp[0].type) == 0) ? 0 : 1;
+        } else if ((yyvsp[-2].type) == 2 && (yyvsp[0].type) == 2) {
+            (yyval.type) = 2; // string + string
+        } else if ((yyvsp[-2].type) == 4 && (yyvsp[0].type) == 4) {
+            (yyval.type) = 4; // ustring + ustring
+        } else if (((yyvsp[-2].type) == 2 && (yyvsp[0].type) == 4) || ((yyvsp[-2].type) == 4 && (yyvsp[0].type) == 2)) {
+            (yyval.type) = 2; // string + ustring
+        } else if ((yyvsp[-2].type) == 3 && (yyvsp[0].type) == 3) {
+            (yyval.type) = 2; // char + char
+        } else {
+            printf("Semantic Error: Invalid operand types for '+'\n");
+            (yyval.type) = 0;
+        }
     }
-#line 1468 "part3.tab.c"
-    break;
-
-  case 47: /* expr: expr MINUS expr  */
-#line 264 "part3.y"
-                      { (yyval.type) = ((yyvsp[-2].type) == 1 || (yyvsp[0].type) == 1) ? 1 : 0; }
 #line 1474 "part3.tab.c"
     break;
 
+  case 47: /* expr: expr MINUS expr  */
+#line 270 "part3.y"
+                      {
+        if (((yyvsp[-2].type) == 0 || (yyvsp[-2].type) == 1) && ((yyvsp[0].type) == 0 || (yyvsp[0].type) == 1)) {
+            (yyval.type) = ((yyvsp[-2].type) == 0 && (yyvsp[0].type) == 0) ? 0 : 1;
+        } else {
+            printf("Semantic Error: Invalid operand types for '-'\n");
+            (yyval.type) = 0;
+        }
+    }
+#line 1487 "part3.tab.c"
+    break;
+
   case 48: /* expr: expr MULT expr  */
-#line 265 "part3.y"
-                     { (yyval.type) = ((yyvsp[-2].type) == 1 || (yyvsp[0].type) == 1) ? 1 : 0; }
-#line 1480 "part3.tab.c"
+#line 278 "part3.y"
+                     {
+        if (((yyvsp[-2].type) == 0 || (yyvsp[-2].type) == 1) && ((yyvsp[0].type) == 0 || (yyvsp[0].type) == 1)) {
+            (yyval.type) = ((yyvsp[-2].type) == 0 && (yyvsp[0].type) == 0) ? 0 : 1;
+        } else {
+            printf("Semantic Error: Invalid operand types for '*'\n");
+            (yyval.type) = 0;
+        }
+    }
+#line 1500 "part3.tab.c"
     break;
 
   case 49: /* expr: expr DIV expr  */
-#line 266 "part3.y"
-                    { (yyval.type) = 1; }
-#line 1486 "part3.tab.c"
+#line 286 "part3.y"
+                    {
+        if (((yyvsp[-2].type) == 0 || (yyvsp[-2].type) == 1) && ((yyvsp[0].type) == 0 || (yyvsp[0].type) == 1)) {
+            (yyval.type) = 1; // חילוק תמיד מחזיר float
+        } else {
+            printf("Semantic Error: Invalid operand types for '/'\n");
+            (yyval.type) = 1;
+        }
+    }
+#line 1513 "part3.tab.c"
     break;
 
   case 50: /* expr: IDENTIFIER OPENPAREN arg_list CLOSEPAREN  */
-#line 267 "part3.y"
+#line 294 "part3.y"
                                                {
         int found = 0;
         int paramc = 0;
@@ -1505,44 +1532,44 @@ yyreduce:
         }
         (yyval.type) = 0; // ברירת מחדל int
     }
-#line 1509 "part3.tab.c"
+#line 1536 "part3.tab.c"
     break;
 
   case 51: /* expr: OPENPAREN expr CLOSEPAREN  */
-#line 285 "part3.y"
+#line 312 "part3.y"
                                 { (yyval.type) = (yyvsp[-1].type); }
-#line 1515 "part3.tab.c"
+#line 1542 "part3.tab.c"
     break;
 
   case 52: /* arg_list: expr  */
-#line 288 "part3.y"
+#line 315 "part3.y"
                {
     (yyval.str) = strdup("");
     strcat((yyval.str), "1");
 }
-#line 1524 "part3.tab.c"
+#line 1551 "part3.tab.c"
     break;
 
   case 53: /* arg_list: expr COMMA arg_list  */
-#line 292 "part3.y"
+#line 319 "part3.y"
                       {
     (yyval.str) = strdup("");
     strcat((yyval.str), "1,");
     strcat((yyval.str), (yyvsp[0].str));
 }
-#line 1534 "part3.tab.c"
+#line 1561 "part3.tab.c"
     break;
 
   case 54: /* arg_list: %empty  */
-#line 297 "part3.y"
+#line 324 "part3.y"
               {
     (yyval.str) = strdup("");
 }
-#line 1542 "part3.tab.c"
+#line 1569 "part3.tab.c"
     break;
 
 
-#line 1546 "part3.tab.c"
+#line 1573 "part3.tab.c"
 
       default: break;
     }
@@ -1735,7 +1762,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 300 "part3.y"
+#line 327 "part3.y"
 
 int main() {
     yyparse();

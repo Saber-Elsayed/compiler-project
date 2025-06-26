@@ -1,8 +1,13 @@
 
 def foo(float x) -> int: {
     int a, b, a, b;
-    a="sss";
-    a = 23;
+    string s;
+    s="hello";
+    string c;
+    c="hi";
+    string res;
+    res=s+c;
+    a = 23+s;
     if a == 23:
         b = 10;
     else:

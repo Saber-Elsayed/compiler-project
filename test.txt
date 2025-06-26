@@ -1,39 +1,21 @@
+def foo(float x)->int: { 
+      int a, b; 
+ a = 23; 
 
-def foo(float x) -> int: {
-int a; float b; string s; bool f;
-if a == b:      
-if s != a:       
-if f == false:  
-f = not f;      
-a = not a;
-    bool ch;
-    int e;
-    e=9;
-    bool result;
-    result=ch and e;
-    int a, b, a, b;
-    string s;
-    s="hello";
-    string c;
-    c="hi";
-    string res;
-    res=s+c;
-    a = 27;
-    if s < 23:
-        b = 10;
-    else:
-        b = 19;
-    return b + a;
+ if a == 23: 
+  b = 10; 
+ else: 
+  b = 19; 
+
+ return b + a; 
+} 
+
+def __main__():{ 
+ int a, b; 
+
+ a = 0; 
+ while a < 10: { 
+  b = foo(3.14); 
+  a = a + b; 
+ }  
 }
-
-def __main__():{
-     a = 0;
-    int a, b;
-     a = 0;
-
-    while a < 10: {
-        b = foo(3.14, 3.2);
-        a = a + b;
-    }
-}
-

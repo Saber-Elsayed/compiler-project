@@ -69,10 +69,12 @@
 /* First part of user prologue.  */
 #line 1 "part3.y"
 
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
+#include <stdlib.h>
 #include "part3.tab.h"
-#define _GNU_SOURCE
 int yylex();
 int yyerror(char *s) { printf("Error: %s\n", s); return 0; }
 int main_count = 0;
@@ -80,13 +82,16 @@ int main_count = 0;
 char* function_names[MAX_FUNCS];
 int function_param_count[MAX_FUNCS];
 int function_count = 0;
-#define MAX_VARS 100
+#define MAX_VARS 1000
 char* var_names[MAX_VARS];
 int var_types[MAX_VARS]; // 0 = int, 1 = float
 int var_count = 0;
 int error_flag = 0;
 int temp_counter = 0;
 int label_counter = 0;
+#define MAX_TAC_LINES 5000
+char* tac_lines[MAX_TAC_LINES];
+int tac_count = 0;
 
 int add_function_name(const char* name, int param_count) {
     for (int i = 0; i < function_count; ++i) {
@@ -110,15 +115,25 @@ void reset_var_table() {
 }
 
 int add_var_name(const char* name, int type) {
+    if (var_count >= MAX_VARS) {
+        printf("Error: Too many variables declared\n");
+        exit(1);
+    }
     for (int i = 0; i < var_count; ++i) {
         if (strcmp(var_names[i], name) == 0) {
             return 0; // קיים כבר
         }
     }
-    if (var_count < MAX_VARS) {
-        var_names[var_count] = strdup(name);
-        var_types[var_count] = type;
-        var_count++;
+    var_names[var_count] = strdup(name);
+    if (!var_names[var_count]) {
+        printf("Error: malloc failed in add_var_name\n");
+        exit(1);
+    }
+    var_types[var_count] = type;
+    var_count++;
+    if (var_count > MAX_VARS) {
+        printf("Error: var_count overflow\n");
+        exit(1);
     }
     return 1; // נוסף בהצלחה
 }
@@ -161,17 +176,46 @@ int count_args(char* ids) {
 
 char* new_temp() {
     char* buf = malloc(10);
+    if (!buf) {
+        printf("Error: malloc failed in new_temp\n");
+        exit(1);
+    }
     sprintf(buf, "t%d", temp_counter++);
     return buf;
 }
 
 char* new_label() {
     char* buf = malloc(10);
+    if (!buf) {
+        printf("Error: malloc failed in new_label\n");
+        exit(1);
+    }
     sprintf(buf, "L%d", ++label_counter);
     return buf;
 }
 
-#line 175 "part3.tab.c"
+void emit(const char* fmt, ...) {
+    if (tac_count >= MAX_TAC_LINES) {
+        printf("Error: Too many TAC lines\n");
+        exit(1);
+    }
+    va_list args;
+    va_start(args, fmt);
+    char* buf = malloc(256);
+    if (!buf) {
+        printf("Error: malloc failed in emit\n");
+        exit(1);
+    }
+    vsnprintf(buf, 256, fmt, args);
+    tac_lines[tac_count++] = buf;
+    if (tac_count > MAX_TAC_LINES) {
+        printf("Error: tac_count overflow\n");
+        exit(1);
+    }
+    va_end(args);
+}
+
+#line 219 "part3.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -254,10 +298,9 @@ enum yysymbol_kind_t
   YYSYMBOL_if_stmt = 52,                   /* if_stmt  */
   YYSYMBOL_while_stmt = 53,                /* while_stmt  */
   YYSYMBOL_return_stmt = 54,               /* return_stmt  */
-  YYSYMBOL_condition = 55,                 /* condition  */
-  YYSYMBOL_type = 56,                      /* type  */
-  YYSYMBOL_expr = 57,                      /* expr  */
-  YYSYMBOL_arg_list = 58                   /* arg_list  */
+  YYSYMBOL_type = 55,                      /* type  */
+  YYSYMBOL_expr = 56,                      /* expr  */
+  YYSYMBOL_arg_list = 57                   /* arg_list  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -585,16 +628,16 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  3
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   224
+#define YYLAST   261
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  41
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  18
+#define YYNNTS  17
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  61
+#define YYNRULES  59
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  130
+#define YYNSTATES  129
 
 /* YYMAXUTOK -- Last valid token kind.  */
 #define YYMAXUTOK   295
@@ -647,13 +690,12 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   132,   132,   135,   136,   139,   149,   162,   170,   183,
-     184,   185,   188,   189,   192,   193,   196,   197,   198,   199,
-     200,   201,   204,   215,   218,   224,   236,   237,   239,   242,
-     245,   247,   248,   249,   250,   251,   252,   255,   256,   257,
-     258,   259,   260,   261,   269,   277,   285,   293,   309,   317,
-     325,   333,   341,   349,   367,   368,   376,   384,   392,   402,
-     406,   411
+       0,   182,   182,   185,   186,   189,   192,   195,   198,   203,
+     204,   205,   208,   209,   212,   215,   219,   220,   221,   222,
+     223,   224,   227,   253,   264,   278,   282,   289,   296,   305,
+     306,   307,   308,   309,   310,   313,   321,   326,   331,   336,
+     341,   346,   358,   363,   375,   387,   399,   411,   423,   435,
+     447,   459,   478,   483,   495,   507,   519,   533,   543,   553
 };
 #endif
 
@@ -676,8 +718,8 @@ static const char *const yytname[] =
   "LT", "GT", "LEQ", "GEQ", "RETURN", "WHILE", "BOOL", "TRUE", "FALSE",
   "AND", "OR", "NOT", "IDENTIFIER", "$accept", "program", "function_list",
   "function", "param_list", "param", "stmts", "stmt", "decl", "id_list",
-  "assign_stmt", "if_stmt", "while_stmt", "return_stmt", "condition",
-  "type", "expr", "arg_list", YY_NULLPTR
+  "assign_stmt", "if_stmt", "while_stmt", "return_stmt", "type", "expr",
+  "arg_list", YY_NULLPTR
 };
 
 static const char *
@@ -687,12 +729,12 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 }
 #endif
 
-#define YYPACT_NINF (-74)
+#define YYPACT_NINF (-87)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
 
-#define YYTABLE_NINF (-36)
+#define YYTABLE_NINF (-34)
 
 #define yytable_value_is_error(Yyn) \
   0
@@ -701,19 +743,19 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
-     -74,     6,    13,   -74,     1,   -74,     9,    23,    65,    67,
-      -3,    18,    46,    64,    60,    68,    72,   -74,   -74,    74,
-      79,    34,    85,    83,    57,     4,   -74,    57,     4,   -74,
-     -74,    40,    61,    66,   -74,    20,    20,    20,    20,   -74,
-     -74,   -74,    20,    -4,    86,    57,   -74,   -74,   -74,   -74,
-     -74,    75,   101,   -74,   -74,   -74,    92,   100,   102,   -74,
-     -74,   -74,   105,    82,   110,   173,   120,   111,   173,    20,
-      20,   -74,   -74,   115,   117,   -74,    20,    20,    20,    20,
-      20,    20,    20,    20,    20,    20,    20,    20,   122,   -74,
-     123,   -74,    57,   -74,   131,   160,   133,   139,    75,   -74,
-     186,   186,    -5,    -5,    37,    37,    37,    37,    37,    37,
-     173,   173,    57,    57,   127,    57,    20,   -74,   -74,   -74,
-     140,   141,   138,   149,   -74,   -74,   -74,    57,   -74,   -74
+     -87,    37,    36,   -87,    13,   -87,    45,    46,    63,    65,
+      20,    34,    61,    66,    64,    68,    67,   -87,   -87,    73,
+      78,    10,    84,    82,    56,     4,   -87,    56,     4,   -87,
+     -87,    59,    60,    74,   -87,    19,    19,    19,    19,   -87,
+     -87,   -87,    19,    -5,    91,    56,   -87,   -87,   -87,   -87,
+     -87,    76,   138,   -87,   -87,   -87,    98,    92,   102,   -87,
+     -87,   -87,   113,    81,   100,   157,   119,   210,    19,    19,
+     -87,   -87,   107,   115,   -87,    19,    19,    19,    19,    19,
+      19,    19,    19,    19,    19,    19,    19,   120,   -87,   122,
+     -87,    56,   -87,   123,   197,   131,   176,    76,   -87,   223,
+     223,    -6,    -6,    35,    35,    35,    35,    35,    35,   210,
+     210,    56,    56,   126,    56,    19,   -87,   -87,   -87,   130,
+     139,   137,   140,   -87,   -87,   -87,    56,   -87,   -87
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -723,31 +765,31 @@ static const yytype_int8 yydefact[] =
 {
        4,     0,     2,     1,     0,     3,     0,     0,     0,     0,
        0,     0,     0,     0,     9,     0,     0,    12,    13,     0,
-       0,    11,     0,     0,    15,     0,    10,    15,     0,    32,
-      31,    38,    39,    40,    37,     0,     0,     0,     0,    36,
-      41,    42,     0,    43,     0,    15,    16,    17,    18,    19,
-      20,     0,     0,    33,    34,    35,     0,     0,     0,    38,
-      39,    40,    43,     0,     0,    30,     0,     0,    46,    61,
-       0,     8,    14,    23,     0,    21,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     6,
-       0,    54,     0,    29,     0,    59,     0,     0,     0,    22,
-      47,    48,    49,    50,    44,    45,    55,    57,    56,    58,
-      51,    52,    15,    15,    26,    15,    61,    53,    25,    24,
-       0,     0,     0,     0,    60,     7,     5,     0,    28,    27
+       0,    11,     0,     0,    15,     0,    10,    15,     0,    30,
+      29,    36,    37,    38,    35,     0,     0,     0,     0,    34,
+      39,    40,     0,    41,     0,    15,    16,    17,    18,    19,
+      20,     0,     0,    31,    32,    33,     0,     0,     0,    36,
+      37,    38,    41,     0,     0,     0,     0,    44,    59,     0,
+       8,    14,    23,     0,    21,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     6,     0,
+      52,     0,    28,     0,    57,     0,     0,     0,    22,    45,
+      46,    47,    48,    42,    43,    53,    55,    54,    56,    49,
+      50,    15,    15,     0,    15,    59,    51,    25,    24,     0,
+       0,     0,     0,    58,     7,     5,     0,    27,    26
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -74,   -74,   -74,   -74,    48,   -74,   -27,   -73,   -74,    73,
-     -74,   -74,   -74,   -74,   126,   -11,   -34,    56
+     -87,   -87,   -87,   -87,    -2,   -87,   -27,   -86,   -87,    75,
+     -87,   -87,   -87,   -87,     8,   -34,    47
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-       0,     1,     2,     5,    13,    14,    44,    45,    46,    74,
-      47,    48,    49,    50,    64,    51,    52,    96
+       0,     1,     2,     5,    13,    14,    44,    45,    46,    73,
+      47,    48,    49,    50,    51,    52,    95
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -755,56 +797,64 @@ static const yytype_int8 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int16 yytable[] =
 {
-      57,    63,    65,    66,    65,     6,     3,    69,    68,    29,
-      30,    53,    54,    55,    56,    70,     4,    58,    72,   114,
-       8,    80,    81,    82,    83,    84,    85,    59,    60,    61,
-      34,    35,    86,    87,     9,    95,    97,    17,    39,    10,
-      11,     7,   100,   101,   102,   103,   104,   105,   106,   107,
-     108,   109,   110,   111,   129,    40,    41,    16,    18,    42,
-      62,    19,    29,    30,    31,    32,    33,    34,    35,    26,
-      10,    11,    10,    11,    86,    87,    20,    12,    21,    15,
-     -33,    36,    95,    22,    23,   120,   121,    24,   123,    37,
-      38,    39,    40,    41,    91,    25,    42,    43,    27,    28,
-      71,   -34,    76,    77,    78,    79,   -35,    88,    80,    81,
-      82,    83,    84,    85,    89,    73,    69,    90,    75,    86,
-      87,    76,    77,    78,    79,    92,    94,    80,    81,    82,
-      83,    84,    85,    98,    99,   112,   113,    93,    86,    87,
-      76,    77,    78,    79,   115,   117,    80,    81,    82,    83,
-      84,    85,   122,   127,   125,   126,   118,    86,    87,    76,
-      77,    78,    79,   128,    67,    80,    81,    82,    83,    84,
-      85,   119,   124,     0,     0,     0,    86,    87,   116,     0,
-      76,    77,    78,    79,     0,     0,    80,    81,    82,    83,
-      84,    85,     0,    76,    77,    78,    79,    86,    87,    80,
-      81,    82,    83,    84,    85,     0,     0,     0,    78,    79,
-      86,    87,    80,    81,    82,    83,    84,    85,     0,     0,
-       0,     0,     0,    86,    87
+      57,    63,    64,    65,    66,   113,    68,    16,    67,    29,
+      30,    53,    54,    55,    69,    10,    11,     6,    71,    26,
+      79,    80,    81,    82,    83,    84,    59,    60,    61,    34,
+      35,    85,    86,    56,    94,    96,    58,     3,    39,     4,
+     128,    99,   100,   101,   102,   103,   104,   105,   106,   107,
+     108,   109,   110,     7,    40,    41,     8,     9,    42,    62,
+      17,    29,    30,    31,    32,    33,    34,    35,    10,    11,
+      10,    11,    85,    86,    18,    12,    19,    15,    20,    23,
+      36,    94,    21,    22,   119,   120,    24,   122,    37,    38,
+      39,    40,    41,    90,    25,    42,    43,    27,    28,   -31,
+     -32,    75,    76,    77,    78,    70,    88,    79,    80,    81,
+      82,    83,    84,    87,   -33,    91,    72,    89,    85,    86,
+      75,    76,    77,    78,    68,    97,    79,    80,    81,    82,
+      83,    84,    98,   111,    93,   112,   114,    85,    86,    75,
+      76,    77,    78,   116,   124,    79,    80,    81,    82,    83,
+      84,   121,   126,   125,   127,    74,    85,    86,    75,    76,
+      77,    78,   123,     0,    79,    80,    81,    82,    83,    84,
+       0,     0,   118,     0,    92,    85,    86,    75,    76,    77,
+      78,     0,     0,    79,    80,    81,    82,    83,    84,     0,
+       0,     0,     0,   117,    85,    86,    75,    76,    77,    78,
+       0,     0,    79,    80,    81,    82,    83,    84,     0,     0,
+       0,     0,     0,    85,    86,   115,     0,    75,    76,    77,
+      78,     0,     0,    79,    80,    81,    82,    83,    84,     0,
+      75,    76,    77,    78,    85,    86,    79,    80,    81,    82,
+      83,    84,     0,     0,     0,    77,    78,    85,    86,    79,
+      80,    81,    82,    83,    84,     0,     0,     0,     0,     0,
+      85,    86
 };
 
 static const yytype_int8 yycheck[] =
 {
-      27,    35,    36,    37,    38,     4,     0,    11,    42,     5,
-       6,     7,     8,     9,    25,    19,     3,    28,    45,    92,
-      11,    26,    27,    28,    29,    30,    31,     7,     8,     9,
-      10,    11,    37,    38,    11,    69,    70,    40,    34,     5,
-       6,    40,    76,    77,    78,    79,    80,    81,    82,    83,
-      84,    85,    86,    87,   127,    35,    36,     9,    40,    39,
-      40,    15,     5,     6,     7,     8,     9,    10,    11,    21,
-       5,     6,     5,     6,    37,    38,    12,    12,    18,    12,
-      40,    24,   116,    15,    12,   112,   113,    13,   115,    32,
-      33,    34,    35,    36,    12,    16,    39,    40,    13,    16,
-      14,    40,    20,    21,    22,    23,    40,    15,    26,    27,
-      28,    29,    30,    31,    14,    40,    11,    15,    17,    37,
-      38,    20,    21,    22,    23,    15,    15,    26,    27,    28,
-      29,    30,    31,    18,    17,    13,    13,    17,    37,    38,
-      20,    21,    22,    23,    13,    12,    26,    27,    28,    29,
-      30,    31,    25,    15,    14,    14,    17,    37,    38,    20,
-      21,    22,    23,    14,    38,    26,    27,    28,    29,    30,
-      31,    98,   116,    -1,    -1,    -1,    37,    38,    18,    -1,
-      20,    21,    22,    23,    -1,    -1,    26,    27,    28,    29,
-      30,    31,    -1,    20,    21,    22,    23,    37,    38,    26,
-      27,    28,    29,    30,    31,    -1,    -1,    -1,    22,    23,
-      37,    38,    26,    27,    28,    29,    30,    31,    -1,    -1,
-      -1,    -1,    -1,    37,    38
+      27,    35,    36,    37,    38,    91,    11,     9,    42,     5,
+       6,     7,     8,     9,    19,     5,     6,     4,    45,    21,
+      26,    27,    28,    29,    30,    31,     7,     8,     9,    10,
+      11,    37,    38,    25,    68,    69,    28,     0,    34,     3,
+     126,    75,    76,    77,    78,    79,    80,    81,    82,    83,
+      84,    85,    86,    40,    35,    36,    11,    11,    39,    40,
+      40,     5,     6,     7,     8,     9,    10,    11,     5,     6,
+       5,     6,    37,    38,    40,    12,    15,    12,    12,    12,
+      24,   115,    18,    15,   111,   112,    13,   114,    32,    33,
+      34,    35,    36,    12,    16,    39,    40,    13,    16,    40,
+      40,    20,    21,    22,    23,    14,    14,    26,    27,    28,
+      29,    30,    31,    15,    40,    15,    40,    15,    37,    38,
+      20,    21,    22,    23,    11,    18,    26,    27,    28,    29,
+      30,    31,    17,    13,    15,    13,    13,    37,    38,    20,
+      21,    22,    23,    12,    14,    26,    27,    28,    29,    30,
+      31,    25,    15,    14,    14,    17,    37,    38,    20,    21,
+      22,    23,   115,    -1,    26,    27,    28,    29,    30,    31,
+      -1,    -1,    97,    -1,    17,    37,    38,    20,    21,    22,
+      23,    -1,    -1,    26,    27,    28,    29,    30,    31,    -1,
+      -1,    -1,    -1,    17,    37,    38,    20,    21,    22,    23,
+      -1,    -1,    26,    27,    28,    29,    30,    31,    -1,    -1,
+      -1,    -1,    -1,    37,    38,    18,    -1,    20,    21,    22,
+      23,    -1,    -1,    26,    27,    28,    29,    30,    31,    -1,
+      20,    21,    22,    23,    37,    38,    26,    27,    28,    29,
+      30,    31,    -1,    -1,    -1,    22,    23,    37,    38,    26,
+      27,    28,    29,    30,    31,    -1,    -1,    -1,    -1,    -1,
+      37,    38
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
@@ -816,14 +866,14 @@ static const yytype_int8 yystos[] =
       12,    18,    15,    12,    13,    16,    45,    13,    16,     5,
        6,     7,     8,     9,    10,    11,    24,    32,    33,    34,
       35,    36,    39,    40,    47,    48,    49,    51,    52,    53,
-      54,    56,    57,     7,     8,     9,    56,    47,    56,     7,
-       8,     9,    40,    57,    55,    57,    57,    55,    57,    11,
-      19,    14,    47,    40,    50,    17,    20,    21,    22,    23,
-      26,    27,    28,    29,    30,    31,    37,    38,    15,    14,
-      15,    12,    15,    17,    15,    57,    58,    57,    18,    17,
-      57,    57,    57,    57,    57,    57,    57,    57,    57,    57,
-      57,    57,    13,    13,    48,    13,    18,    12,    17,    50,
-      47,    47,    25,    47,    58,    14,    14,    15,    14,    48
+      54,    55,    56,     7,     8,     9,    55,    47,    55,     7,
+       8,     9,    40,    56,    56,    56,    56,    56,    11,    19,
+      14,    47,    40,    50,    17,    20,    21,    22,    23,    26,
+      27,    28,    29,    30,    31,    37,    38,    15,    14,    15,
+      12,    15,    17,    15,    56,    57,    56,    18,    17,    56,
+      56,    56,    56,    56,    56,    56,    56,    56,    56,    56,
+      56,    13,    13,    48,    13,    18,    12,    17,    50,    47,
+      47,    25,    47,    57,    14,    14,    15,    14,    48
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
@@ -831,11 +881,10 @@ static const yytype_int8 yyr1[] =
 {
        0,    41,    42,    43,    43,    44,    44,    44,    44,    45,
       45,    45,    46,    46,    47,    47,    48,    48,    48,    48,
-      48,    48,    49,    50,    50,    51,    52,    52,    53,    54,
-      55,    56,    56,    56,    56,    56,    56,    57,    57,    57,
-      57,    57,    57,    57,    57,    57,    57,    57,    57,    57,
-      57,    57,    57,    57,    57,    57,    57,    57,    57,    58,
-      58,    58
+      48,    48,    49,    50,    50,    51,    52,    53,    54,    55,
+      55,    55,    55,    55,    55,    56,    56,    56,    56,    56,
+      56,    56,    56,    56,    56,    56,    56,    56,    56,    56,
+      56,    56,    56,    56,    56,    56,    56,    57,    57,    57
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
@@ -843,11 +892,10 @@ static const yytype_int8 yyr2[] =
 {
        0,     2,     1,     2,     0,    11,     8,    11,     8,     1,
        3,     0,     2,     2,     2,     0,     1,     1,     1,     1,
-       1,     2,     3,     1,     3,     4,     4,     7,     6,     3,
+       1,     2,     3,     1,     3,     4,     7,     6,     3,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     3,     3,     2,     3,     3,     3,
-       3,     3,     3,     4,     3,     3,     3,     3,     3,     1,
-       3,     0
+       1,     1,     3,     3,     2,     3,     3,     3,     3,     3,
+       3,     4,     3,     3,     3,     3,     3,     1,     3,     0
 };
 
 
@@ -1311,448 +1359,622 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* program: function_list  */
-#line 132 "part3.y"
+#line 182 "part3.y"
                        { printf("Parsing OK\n"); }
-#line 1317 "part3.tab.c"
+#line 1365 "part3.tab.c"
     break;
 
   case 5: /* function: DEF IDENTIFIER OPENPAREN param_list CLOSEPAREN ARROW type COLON OPENBRACE stmts CLOSEBRACE  */
-#line 139 "part3.y"
+#line 189 "part3.y"
                                                                                                      {
-    reset_var_table();
-    int paramc = count_params((yyvsp[-7].str));
-    if (strcmp((yyvsp[-9].str), "__main__") == 0) {
-        printf("Semantic Error: main/__main__ must not have parameters or return type\n");
-    }
-    if (!add_function_name((yyvsp[-9].str), paramc)) {
-        printf("Semantic Error: Duplicate function name: %s\n", (yyvsp[-9].str));
-    }
+    printf("%s:\n BeginFunc 20\n%sEndFunc\n", (yyvsp[-9].str), (yyvsp[-1].code));
 }
-#line 1332 "part3.tab.c"
+#line 1373 "part3.tab.c"
     break;
 
   case 6: /* function: DEF IDENTIFIER OPENPAREN CLOSEPAREN COLON OPENBRACE stmts CLOSEBRACE  */
-#line 149 "part3.y"
+#line 192 "part3.y"
                                                                        {
-    reset_var_table();
-    int paramc = 0;
-    if (strcmp((yyvsp[-6].str), "__main__") == 0) {
-        main_count++;
-        if (main_count > 1) {
-            printf("Semantic Error: Multiple definitions of main\n");
-        }
-    }
-    if (!add_function_name((yyvsp[-6].str), paramc)) {
-        printf("Semantic Error: Duplicate function name: %s\n", (yyvsp[-6].str));
-    }
+    printf("%s:\n BeginFunc 20\n%sEndFunc\n", (yyvsp[-6].str), (yyvsp[-1].code));
 }
-#line 1350 "part3.tab.c"
+#line 1381 "part3.tab.c"
     break;
 
   case 7: /* function: DEF MAIN OPENPAREN param_list CLOSEPAREN ARROW type COLON OPENBRACE stmts CLOSEBRACE  */
-#line 162 "part3.y"
+#line 195 "part3.y"
                                                                                        {
-    reset_var_table();
-    int paramc = count_params((yyvsp[-7].str));
-    printf("Semantic Error: main/__main__ must not have parameters or return type\n");
-    if (!add_function_name("main", paramc)) {
-        printf("Semantic Error: Duplicate function name: main\n");
-    }
+    printf("main:\n BeginFunc 24\n%sEndFunc\n", (yyvsp[-1].code));
 }
-#line 1363 "part3.tab.c"
+#line 1389 "part3.tab.c"
     break;
 
   case 8: /* function: DEF MAIN OPENPAREN CLOSEPAREN COLON OPENBRACE stmts CLOSEBRACE  */
-#line 170 "part3.y"
+#line 198 "part3.y"
                                                                  {
-    reset_var_table();
-    int paramc = 0;
-    main_count++;
-    if (main_count > 1) {
-        printf("Semantic Error: Multiple definitions of main\n");
-    }
-    if (!add_function_name("main", paramc)) {
-        printf("Semantic Error: Duplicate function name: main\n");
-    }
+    printf("main:\n BeginFunc 24\n%sEndFunc\n", (yyvsp[-1].code));
 }
-#line 1379 "part3.tab.c"
+#line 1397 "part3.tab.c"
+    break;
+
+  case 9: /* param_list: param  */
+#line 203 "part3.y"
+                  { (yyval.str) = strdup(""); }
+#line 1403 "part3.tab.c"
+    break;
+
+  case 10: /* param_list: param COMMA param_list  */
+#line 204 "part3.y"
+                                   { (yyval.str) = strdup(""); }
+#line 1409 "part3.tab.c"
+    break;
+
+  case 11: /* param_list: %empty  */
+#line 205 "part3.y"
+                        { (yyval.str) = strdup(""); }
+#line 1415 "part3.tab.c"
+    break;
+
+  case 14: /* stmts: stmt stmts  */
+#line 212 "part3.y"
+                  {
+    asprintf(&(yyval.code), "%s%s", (yyvsp[-1].code), (yyvsp[0].code));
+}
+#line 1423 "part3.tab.c"
+    break;
+
+  case 15: /* stmts: %empty  */
+#line 215 "part3.y"
+              {
+    (yyval.code) = strdup("");
+}
+#line 1431 "part3.tab.c"
+    break;
+
+  case 17: /* stmt: assign_stmt  */
+#line 220 "part3.y"
+                  { (yyval.code) = (yyvsp[0].code); }
+#line 1437 "part3.tab.c"
+    break;
+
+  case 18: /* stmt: if_stmt  */
+#line 221 "part3.y"
+              { (yyval.code) = (yyvsp[0].code); }
+#line 1443 "part3.tab.c"
+    break;
+
+  case 19: /* stmt: while_stmt  */
+#line 222 "part3.y"
+                 { (yyval.code) = (yyvsp[0].code); }
+#line 1449 "part3.tab.c"
+    break;
+
+  case 20: /* stmt: return_stmt  */
+#line 223 "part3.y"
+                  { (yyval.code) = (yyvsp[0].code); }
+#line 1455 "part3.tab.c"
+    break;
+
+  case 21: /* stmt: expr SEMICOLON  */
+#line 224 "part3.y"
+                     { (yyval.code) = (yyvsp[-1].exprval).code; }
+#line 1461 "part3.tab.c"
     break;
 
   case 22: /* decl: type id_list SEMICOLON  */
-#line 204 "part3.y"
+#line 227 "part3.y"
                              {
-    char* ids = (yyvsp[-1].str);
+    if ((yyvsp[-1].str) == NULL) {
+        printf("Error: NULL id_list in decl\n");
+        exit(1);
+    }
+    char* ids = strdup((yyvsp[-1].str));
+    if (!ids) {
+        printf("Error: malloc failed in decl (strdup)\n");
+        exit(1);
+    }
     char* token = strtok(ids, ",");
     while (token != NULL) {
+        if (strlen(token) == 0) {
+            printf("Error: Empty variable name in decl\n");
+            free(ids);
+            exit(1);
+        }
         if (!add_var_name(token, (yyvsp[-2].type))) {
             printf("Semantic Error: Duplicate variable name: %s\n", token);
         }
         token = strtok(NULL, ",");
     }
+    free(ids);
+    (yyval.str) = strdup("");
 }
-#line 1394 "part3.tab.c"
+#line 1491 "part3.tab.c"
     break;
 
   case 23: /* id_list: IDENTIFIER  */
-#line 215 "part3.y"
+#line 253 "part3.y"
                     {
+    if ((yyvsp[0].str) == NULL) {
+        printf("Error: NULL identifier in id_list\n");
+        exit(1);
+    }
     (yyval.str) = strdup((yyvsp[0].str));
+    if (!(yyval.str)) {
+        printf("Error: malloc failed in id_list (IDENTIFIER)\n");
+        exit(1);
+    }
 }
-#line 1402 "part3.tab.c"
+#line 1507 "part3.tab.c"
     break;
 
   case 24: /* id_list: IDENTIFIER COMMA id_list  */
-#line 218 "part3.y"
+#line 264 "part3.y"
                            {
-    int len = strlen((yyvsp[-2].str)) + strlen((yyvsp[0].str)) + 2;
+    if ((yyvsp[-2].str) == NULL || (yyvsp[0].str) == NULL) {
+        printf("Error: NULL identifier in id_list (COMMA)\n");
+        exit(1);
+    }
+    int len = strlen((yyvsp[-2].str)) + strlen((yyvsp[0].str)) + 2; // 1 for comma, 1 for \0
     (yyval.str) = malloc(len);
+    if (!(yyval.str)) {
+        printf("Error: malloc failed in id_list (COMMA)\n");
+        exit(1);
+    }
     snprintf((yyval.str), len, "%s,%s", (yyvsp[-2].str), (yyvsp[0].str));
 }
-#line 1412 "part3.tab.c"
+#line 1525 "part3.tab.c"
     break;
 
   case 25: /* assign_stmt: IDENTIFIER ASSIGN expr SEMICOLON  */
-#line 224 "part3.y"
+#line 278 "part3.y"
                                               {
-    if (!is_var_defined((yyvsp[-3].str))) {
-        printf("Semantic Error: Use of undefined variable: %s\n", (yyvsp[-3].str));
-    } else {
-        int var_type = get_var_type((yyvsp[-3].str));
-        int expr_type = (yyvsp[-1].type);
-        if (var_type != expr_type) {
-            printf("Semantic Error: Type mismatch in assignment to variable '%s'\n", (yyvsp[-3].str));
-        }
+    asprintf(&(yyval.code), "%s%s = %s\n", (yyvsp[-1].exprval).code, (yyvsp[-3].str), (yyvsp[-1].exprval).temp);
+}
+#line 1533 "part3.tab.c"
+    break;
+
+  case 26: /* if_stmt: IF expr COLON stmt ELSE COLON stmt  */
+#line 282 "part3.y"
+                                            {
+    char* l1 = new_label();
+    char* l2 = new_label();
+    char* l3 = new_label();
+    asprintf(&(yyval.code), "%sif %s Goto %s\nGoto %s\n%s: %sGoto %s\n%s: %sGoto %s\n%s:\n", (yyvsp[-5].exprval).code, (yyvsp[-5].exprval).temp, l1, l2, l1, (yyvsp[-3].code), l3, l2, (yyvsp[0].code), l3, l3);
+}
+#line 1544 "part3.tab.c"
+    break;
+
+  case 27: /* while_stmt: WHILE expr COLON OPENBRACE stmts CLOSEBRACE  */
+#line 289 "part3.y"
+                                                        {
+    char* l_start = new_label();
+    char* l_body = new_label();
+    char* l_exit = new_label();
+    asprintf(&(yyval.code), "%s:\n%sif %s Goto %s\nGoto %s\n%s: %sGoto %s\n%s:\n", l_start, (yyvsp[-4].exprval).code, (yyvsp[-4].exprval).temp, l_body, l_exit, l_body, (yyvsp[-1].code), l_start, l_exit);
+}
+#line 1555 "part3.tab.c"
+    break;
+
+  case 28: /* return_stmt: RETURN expr SEMICOLON  */
+#line 296 "part3.y"
+                                   {
+    if ((yyvsp[-1].exprval).temp == NULL) (yyvsp[-1].exprval).temp = strdup("");
+    if ((yyvsp[-1].exprval).code == NULL) (yyvsp[-1].exprval).code = strdup("");
+    if (asprintf(&(yyval.code), "%sReturn %s\n", (yyvsp[-1].exprval).code, (yyvsp[-1].exprval).temp) == -1) {
+        printf("Error: asprintf failed\n");
+        exit(1);
     }
 }
-#line 1428 "part3.tab.c"
+#line 1568 "part3.tab.c"
     break;
 
-  case 30: /* condition: expr  */
-#line 245 "part3.y"
-                { (yyval.type) = (yyvsp[0].type); }
-#line 1434 "part3.tab.c"
-    break;
-
-  case 31: /* type: INT  */
-#line 247 "part3.y"
+  case 29: /* type: INT  */
+#line 305 "part3.y"
           { (yyval.type) = 0; }
-#line 1440 "part3.tab.c"
+#line 1574 "part3.tab.c"
     break;
 
-  case 32: /* type: FLOAT  */
-#line 248 "part3.y"
+  case 30: /* type: FLOAT  */
+#line 306 "part3.y"
             { (yyval.type) = 1; }
-#line 1446 "part3.tab.c"
+#line 1580 "part3.tab.c"
     break;
 
-  case 33: /* type: STRING  */
-#line 249 "part3.y"
+  case 31: /* type: STRING  */
+#line 307 "part3.y"
              { (yyval.type) = 2; }
-#line 1452 "part3.tab.c"
+#line 1586 "part3.tab.c"
     break;
 
-  case 34: /* type: CHAR  */
-#line 250 "part3.y"
+  case 32: /* type: CHAR  */
+#line 308 "part3.y"
            { (yyval.type) = 3; }
-#line 1458 "part3.tab.c"
-    break;
-
-  case 35: /* type: USTRING  */
-#line 251 "part3.y"
-              { (yyval.type) = 4; }
-#line 1464 "part3.tab.c"
-    break;
-
-  case 36: /* type: BOOL  */
-#line 252 "part3.y"
-           { (yyval.type) = 5; }
-#line 1470 "part3.tab.c"
-    break;
-
-  case 37: /* expr: NUMBER  */
-#line 255 "part3.y"
-             { (yyval.type) = (yyvsp[0].type); }
-#line 1476 "part3.tab.c"
-    break;
-
-  case 38: /* expr: STRING  */
-#line 256 "part3.y"
-             { (yyval.type) = 2; }
-#line 1482 "part3.tab.c"
-    break;
-
-  case 39: /* expr: CHAR  */
-#line 257 "part3.y"
-           { (yyval.type) = 3; }
-#line 1488 "part3.tab.c"
-    break;
-
-  case 40: /* expr: USTRING  */
-#line 258 "part3.y"
-              { (yyval.type) = 4; }
-#line 1494 "part3.tab.c"
-    break;
-
-  case 41: /* expr: TRUE  */
-#line 259 "part3.y"
-           { (yyval.type) = 5; }
-#line 1500 "part3.tab.c"
-    break;
-
-  case 42: /* expr: FALSE  */
-#line 260 "part3.y"
-            { (yyval.type) = 5; }
-#line 1506 "part3.tab.c"
-    break;
-
-  case 43: /* expr: IDENTIFIER  */
-#line 261 "part3.y"
-                 {
-        if (!is_var_defined((yyvsp[0].str))) {
-            printf("Semantic Error: Use of undefined variable: %s\n", (yyvsp[0].str));
-            (yyval.type) = 0; // ברירת מחדל
-        } else {
-            (yyval.type) = get_var_type((yyvsp[0].str));
-        }
-    }
-#line 1519 "part3.tab.c"
-    break;
-
-  case 44: /* expr: expr EQ expr  */
-#line 269 "part3.y"
-                   {
-        if ((yyvsp[-2].type) == (yyvsp[0].type)) {
-            (yyval.type) = 5;
-        } else {
-            printf("Semantic Error: Operand types for '==' must match\n");
-            (yyval.type) = 5;
-        }
-    }
-#line 1532 "part3.tab.c"
-    break;
-
-  case 45: /* expr: expr NEQ expr  */
-#line 277 "part3.y"
-                    {
-        if ((yyvsp[-2].type) == (yyvsp[0].type)) {
-            (yyval.type) = 5;
-        } else {
-            printf("Semantic Error: Operand types for '!=' must match\n");
-            (yyval.type) = 5;
-        }
-    }
-#line 1545 "part3.tab.c"
-    break;
-
-  case 46: /* expr: NOT expr  */
-#line 285 "part3.y"
-               {
-        if ((yyvsp[0].type) == 5) {
-            (yyval.type) = 5;
-        } else {
-            printf("Semantic Error: 'not' operator requires bool operand\n");
-            (yyval.type) = 5;
-        }
-    }
-#line 1558 "part3.tab.c"
-    break;
-
-  case 47: /* expr: expr PLUS expr  */
-#line 293 "part3.y"
-                     {
-        if (((yyvsp[-2].type) == 0 || (yyvsp[-2].type) == 1) && ((yyvsp[0].type) == 0 || (yyvsp[0].type) == 1)) {
-            (yyval.type) = ((yyvsp[-2].type) == 0 && (yyvsp[0].type) == 0) ? 0 : 1;
-        } else if ((yyvsp[-2].type) == 2 && (yyvsp[0].type) == 2) {
-            (yyval.type) = 2; // string + string
-        } else if ((yyvsp[-2].type) == 4 && (yyvsp[0].type) == 4) {
-            (yyval.type) = 4; // ustring + ustring
-        } else if (((yyvsp[-2].type) == 2 && (yyvsp[0].type) == 4) || ((yyvsp[-2].type) == 4 && (yyvsp[0].type) == 2)) {
-            (yyval.type) = 2; // string + ustring
-        } else if ((yyvsp[-2].type) == 3 && (yyvsp[0].type) == 3) {
-            (yyval.type) = 2; // char + char
-        } else {
-            printf("Semantic Error: Invalid operand types for '+'\n");
-            (yyval.type) = 0;
-        }
-    }
-#line 1579 "part3.tab.c"
-    break;
-
-  case 48: /* expr: expr MINUS expr  */
-#line 309 "part3.y"
-                      {
-        if (((yyvsp[-2].type) == 0 || (yyvsp[-2].type) == 1) && ((yyvsp[0].type) == 0 || (yyvsp[0].type) == 1)) {
-            (yyval.type) = ((yyvsp[-2].type) == 0 && (yyvsp[0].type) == 0) ? 0 : 1;
-        } else {
-            printf("Semantic Error: Invalid operand types for '-'\n");
-            (yyval.type) = 0;
-        }
-    }
 #line 1592 "part3.tab.c"
     break;
 
-  case 49: /* expr: expr MULT expr  */
-#line 317 "part3.y"
-                     {
-        if (((yyvsp[-2].type) == 0 || (yyvsp[-2].type) == 1) && ((yyvsp[0].type) == 0 || (yyvsp[0].type) == 1)) {
-            (yyval.type) = ((yyvsp[-2].type) == 0 && (yyvsp[0].type) == 0) ? 0 : 1;
-        } else {
-            printf("Semantic Error: Invalid operand types for '*'\n");
-            (yyval.type) = 0;
-        }
-    }
-#line 1605 "part3.tab.c"
+  case 33: /* type: USTRING  */
+#line 309 "part3.y"
+              { (yyval.type) = 4; }
+#line 1598 "part3.tab.c"
     break;
 
-  case 50: /* expr: expr DIV expr  */
-#line 325 "part3.y"
-                    {
-        if (((yyvsp[-2].type) == 0 || (yyvsp[-2].type) == 1) && ((yyvsp[0].type) == 0 || (yyvsp[0].type) == 1)) {
-            (yyval.type) = 1; // חילוק תמיד מחזיר float
-        } else {
-            printf("Semantic Error: Invalid operand types for '/'\n");
-            (yyval.type) = 1;
-        }
-    }
-#line 1618 "part3.tab.c"
+  case 34: /* type: BOOL  */
+#line 310 "part3.y"
+           { (yyval.type) = 5; }
+#line 1604 "part3.tab.c"
     break;
 
-  case 51: /* expr: expr AND expr  */
-#line 333 "part3.y"
-                    {
-        if ((yyvsp[-2].type) == 5 && (yyvsp[0].type) == 5) {
-            (yyval.type) = 5;
-        } else {
-            printf("Semantic Error: Invalid operand types for 'and' (must be bool)\n");
-            (yyval.type) = 5;
-        }
+  case 35: /* expr: NUMBER  */
+#line 313 "part3.y"
+             {
+    (yyval.exprval).type = 0;
+    (yyval.exprval).temp = new_temp();
+    if (asprintf(&(yyval.exprval).code, "%s = %d\n", (yyval.exprval).temp, (yyvsp[0].type)) == -1) {
+        printf("Error: asprintf failed\n");
+        exit(1);
     }
-#line 1631 "part3.tab.c"
+}
+#line 1617 "part3.tab.c"
     break;
 
-  case 52: /* expr: expr OR expr  */
+  case 36: /* expr: STRING  */
+#line 321 "part3.y"
+         {
+    (yyval.exprval).type = 2;
+    (yyval.exprval).temp = strdup("");
+    (yyval.exprval).code = strdup("");
+}
+#line 1627 "part3.tab.c"
+    break;
+
+  case 37: /* expr: CHAR  */
+#line 326 "part3.y"
+       {
+    (yyval.exprval).type = 3;
+    (yyval.exprval).temp = strdup("");
+    (yyval.exprval).code = strdup("");
+}
+#line 1637 "part3.tab.c"
+    break;
+
+  case 38: /* expr: USTRING  */
+#line 331 "part3.y"
+          {
+    (yyval.exprval).type = 4;
+    (yyval.exprval).temp = strdup("");
+    (yyval.exprval).code = strdup("");
+}
+#line 1647 "part3.tab.c"
+    break;
+
+  case 39: /* expr: TRUE  */
+#line 336 "part3.y"
+       {
+    (yyval.exprval).type = 5;
+    (yyval.exprval).temp = strdup("true");
+    (yyval.exprval).code = strdup("");
+}
+#line 1657 "part3.tab.c"
+    break;
+
+  case 40: /* expr: FALSE  */
 #line 341 "part3.y"
-                   {
-        if ((yyvsp[-2].type) == 5 && (yyvsp[0].type) == 5) {
-            (yyval.type) = 5;
-        } else {
-            printf("Semantic Error: Invalid operand types for 'or' (must be bool)\n");
-            (yyval.type) = 5;
-        }
-    }
-#line 1644 "part3.tab.c"
-    break;
-
-  case 53: /* expr: IDENTIFIER OPENPAREN arg_list CLOSEPAREN  */
-#line 349 "part3.y"
-                                               {
-        int found = 0;
-        int paramc = 0;
-        int argc = count_args((yyvsp[-1].str));
-        for (int i = 0; i < function_count; ++i) {
-            if (strcmp(function_names[i], (yyvsp[-3].str)) == 0) {
-                found = 1;
-                paramc = function_param_count[i];
-                break;
-            }
-        }
-        if (!found) {
-            printf("Semantic Error: Call to undefined function: %s\n", (yyvsp[-3].str));
-        } else if (argc > paramc) {
-            printf("Semantic Error: Too many arguments in call to function: %s\n", (yyvsp[-3].str));
-        }
-        (yyval.type) = 0; // ברירת מחדל int
-    }
+        {
+    (yyval.exprval).type = 5;
+    (yyval.exprval).temp = strdup("false");
+    (yyval.exprval).code = strdup("");
+}
 #line 1667 "part3.tab.c"
     break;
 
-  case 54: /* expr: OPENPAREN expr CLOSEPAREN  */
-#line 367 "part3.y"
-                                { (yyval.type) = (yyvsp[-1].type); }
-#line 1673 "part3.tab.c"
-    break;
-
-  case 55: /* expr: expr LT expr  */
-#line 368 "part3.y"
-                   {
-        if (((yyvsp[-2].type) == 0 || (yyvsp[-2].type) == 1) && ((yyvsp[0].type) == 0 || (yyvsp[0].type) == 1)) {
-            (yyval.type) = 5;
-        } else {
-            printf("Semantic Error: Invalid operand types for '<' (must be int or float)\n");
-            (yyval.type) = 5;
-        }
+  case 41: /* expr: IDENTIFIER  */
+#line 346 "part3.y"
+             {
+    if (!is_var_defined((yyvsp[0].str))) {
+        printf("Semantic Error: Use of undefined variable: %s\n", (yyvsp[0].str));
+        (yyval.exprval).type = -1;
+        (yyval.exprval).temp = strdup("");
+        (yyval.exprval).code = strdup("");
+    } else {
+        (yyval.exprval).type = get_var_type((yyvsp[0].str));
+        (yyval.exprval).temp = strdup((yyvsp[0].str));
+        (yyval.exprval).code = strdup("");
     }
-#line 1686 "part3.tab.c"
+}
+#line 1684 "part3.tab.c"
     break;
 
-  case 56: /* expr: expr LEQ expr  */
-#line 376 "part3.y"
-                    {
-        if (((yyvsp[-2].type) == 0 || (yyvsp[-2].type) == 1) && ((yyvsp[0].type) == 0 || (yyvsp[0].type) == 1)) {
-            (yyval.type) = 5;
-        } else {
-            printf("Semantic Error: Invalid operand types for '<=' (must be int or float)\n");
-            (yyval.type) = 5;
-        }
-    }
-#line 1699 "part3.tab.c"
-    break;
-
-  case 57: /* expr: expr GT expr  */
-#line 384 "part3.y"
-                   {
-        if (((yyvsp[-2].type) == 0 || (yyvsp[-2].type) == 1) && ((yyvsp[0].type) == 0 || (yyvsp[0].type) == 1)) {
-            (yyval.type) = 5;
-        } else {
-            printf("Semantic Error: Invalid operand types for '>' (must be int or float)\n");
-            (yyval.type) = 5;
-        }
-    }
-#line 1712 "part3.tab.c"
-    break;
-
-  case 58: /* expr: expr GEQ expr  */
-#line 392 "part3.y"
-                    {
-        if (((yyvsp[-2].type) == 0 || (yyvsp[-2].type) == 1) && ((yyvsp[0].type) == 0 || (yyvsp[0].type) == 1)) {
-            (yyval.type) = 5;
-        } else {
-            printf("Semantic Error: Invalid operand types for '>=' (must be int or float)\n");
-            (yyval.type) = 5;
-        }
-    }
-#line 1725 "part3.tab.c"
-    break;
-
-  case 59: /* arg_list: expr  */
-#line 402 "part3.y"
+  case 42: /* expr: expr EQ expr  */
+#line 358 "part3.y"
                {
-    (yyval.str) = strdup("");
-    strcat((yyval.str), "1");
+    (yyval.exprval).type = 5;
+    (yyval.exprval).temp = new_temp();
+    asprintf(&(yyval.exprval).code, "%s%s%s = %s == %s\n", (yyvsp[-2].exprval).code, (yyvsp[0].exprval).code, (yyval.exprval).temp, (yyvsp[-2].exprval).temp, (yyvsp[0].exprval).temp);
 }
-#line 1734 "part3.tab.c"
+#line 1694 "part3.tab.c"
     break;
 
-  case 60: /* arg_list: expr COMMA arg_list  */
-#line 406 "part3.y"
-                      {
-    (yyval.str) = strdup("");
-    strcat((yyval.str), "1,");
-    strcat((yyval.str), (yyvsp[0].str));
+  case 43: /* expr: expr NEQ expr  */
+#line 363 "part3.y"
+                {
+    if ((yyvsp[-2].exprval).type == (yyvsp[0].exprval).type) {
+        (yyval.exprval).type = 5;
+        (yyval.exprval).temp = new_temp();
+        asprintf(&(yyval.exprval).code, "%s%s%s = %s != %s\n", (yyvsp[-2].exprval).code, (yyvsp[0].exprval).code, (yyval.exprval).temp, (yyvsp[-2].exprval).temp, (yyvsp[0].exprval).temp);
+    } else {
+        printf("Semantic Error: Operand types for '!=' must match\n");
+        (yyval.exprval).type = 5;
+        (yyval.exprval).temp = strdup("");
+        (yyval.exprval).code = strdup("");
+    }
 }
-#line 1744 "part3.tab.c"
+#line 1711 "part3.tab.c"
     break;
 
-  case 61: /* arg_list: %empty  */
+  case 44: /* expr: NOT expr  */
+#line 375 "part3.y"
+           {
+    if ((yyvsp[0].exprval).type == 5) {
+        (yyval.exprval).type = 5;
+        (yyval.exprval).temp = new_temp();
+        asprintf(&(yyval.exprval).code, "%s%s%s = !%s\n", (yyval.exprval).code, (yyvsp[0].exprval).code, (yyval.exprval).temp, (yyvsp[0].exprval).temp);
+    } else {
+        printf("Semantic Error: 'not' operator requires bool operand\n");
+        (yyval.exprval).type = 5;
+        (yyval.exprval).temp = strdup("");
+        (yyval.exprval).code = strdup("");
+    }
+}
+#line 1728 "part3.tab.c"
+    break;
+
+  case 45: /* expr: expr PLUS expr  */
+#line 387 "part3.y"
+                 {
+    if ((yyvsp[-2].exprval).temp == NULL) (yyvsp[-2].exprval).temp = strdup("");
+    if ((yyvsp[0].exprval).temp == NULL) (yyvsp[0].exprval).temp = strdup("");
+    if ((yyvsp[-2].exprval).code == NULL) (yyvsp[-2].exprval).code = strdup("");
+    if ((yyvsp[0].exprval).code == NULL) (yyvsp[0].exprval).code = strdup("");
+    (yyval.exprval).type = ((yyvsp[-2].exprval).type == 1 || (yyvsp[0].exprval).type == 1) ? 1 : 0;
+    (yyval.exprval).temp = new_temp();
+    if (asprintf(&(yyval.exprval).code, "%s%s%s = %s + %s\n", (yyvsp[-2].exprval).code, (yyvsp[0].exprval).code, (yyval.exprval).temp, (yyvsp[-2].exprval).temp, (yyvsp[0].exprval).temp) == -1) {
+        printf("Error: asprintf failed\n");
+        exit(1);
+    }
+}
+#line 1745 "part3.tab.c"
+    break;
+
+  case 46: /* expr: expr MINUS expr  */
+#line 399 "part3.y"
+                  {
+    if (((yyvsp[-2].exprval).type == 0 || (yyvsp[-2].exprval).type == 1) && ((yyvsp[0].exprval).type == 0 || (yyvsp[0].exprval).type == 1)) {
+        (yyval.exprval).type = ((yyvsp[-2].exprval).type == 1 || (yyvsp[0].exprval).type == 1) ? 1 : 0;
+        (yyval.exprval).temp = new_temp();
+        asprintf(&(yyval.exprval).code, "%s%s%s = %s - %s\n", (yyvsp[-2].exprval).code, (yyvsp[0].exprval).code, (yyval.exprval).temp, (yyvsp[-2].exprval).temp, (yyvsp[0].exprval).temp);
+    } else {
+        printf("Semantic Error: Invalid operand types for '-'\n");
+        (yyval.exprval).type = -1;
+        (yyval.exprval).temp = strdup("");
+        (yyval.exprval).code = strdup("");
+    }
+}
+#line 1762 "part3.tab.c"
+    break;
+
+  case 47: /* expr: expr MULT expr  */
 #line 411 "part3.y"
+                 {
+    if (((yyvsp[-2].exprval).type == 0 || (yyvsp[-2].exprval).type == 1) && ((yyvsp[0].exprval).type == 0 || (yyvsp[0].exprval).type == 1)) {
+        (yyval.exprval).type = ((yyvsp[-2].exprval).type == 1 || (yyvsp[0].exprval).type == 1) ? 1 : 0;
+        (yyval.exprval).temp = new_temp();
+        asprintf(&(yyval.exprval).code, "%s%s%s = %s * %s\n", (yyvsp[-2].exprval).code, (yyvsp[0].exprval).code, (yyval.exprval).temp, (yyvsp[-2].exprval).temp, (yyvsp[0].exprval).temp);
+    } else {
+        printf("Semantic Error: Invalid operand types for '*'\n");
+        (yyval.exprval).type = -1;
+        (yyval.exprval).temp = strdup("");
+        (yyval.exprval).code = strdup("");
+    }
+}
+#line 1779 "part3.tab.c"
+    break;
+
+  case 48: /* expr: expr DIV expr  */
+#line 423 "part3.y"
+                {
+    if (((yyvsp[-2].exprval).type == 0 || (yyvsp[-2].exprval).type == 1) && ((yyvsp[0].exprval).type == 0 || (yyvsp[0].exprval).type == 1)) {
+        (yyval.exprval).type = 1;
+        (yyval.exprval).temp = new_temp();
+        asprintf(&(yyval.exprval).code, "%s%s%s = %s / %s\n", (yyvsp[-2].exprval).code, (yyvsp[0].exprval).code, (yyval.exprval).temp, (yyvsp[-2].exprval).temp, (yyvsp[0].exprval).temp);
+    } else {
+        printf("Semantic Error: Invalid operand types for '/'\n");
+        (yyval.exprval).type = -1;
+        (yyval.exprval).temp = strdup("");
+        (yyval.exprval).code = strdup("");
+    }
+}
+#line 1796 "part3.tab.c"
+    break;
+
+  case 49: /* expr: expr AND expr  */
+#line 435 "part3.y"
+                {
+    if ((yyvsp[-2].exprval).type == 5 && (yyvsp[0].exprval).type == 5) {
+        (yyval.exprval).type = 5;
+        (yyval.exprval).temp = new_temp();
+        asprintf(&(yyval.exprval).code, "%s%s%s = %s && %s\n", (yyvsp[-2].exprval).code, (yyvsp[0].exprval).code, (yyval.exprval).temp, (yyvsp[-2].exprval).temp, (yyvsp[0].exprval).temp);
+    } else {
+        printf("Semantic Error: Invalid operand types for 'and' (must be bool)\n");
+        (yyval.exprval).type = 5;
+        (yyval.exprval).temp = strdup("");
+        (yyval.exprval).code = strdup("");
+    }
+}
+#line 1813 "part3.tab.c"
+    break;
+
+  case 50: /* expr: expr OR expr  */
+#line 447 "part3.y"
+               {
+    if ((yyvsp[-2].exprval).type == 5 && (yyvsp[0].exprval).type == 5) {
+        (yyval.exprval).type = 5;
+        (yyval.exprval).temp = new_temp();
+        asprintf(&(yyval.exprval).code, "%s%s%s = %s || %s\n", (yyvsp[-2].exprval).code, (yyvsp[0].exprval).code, (yyval.exprval).temp, (yyvsp[-2].exprval).temp, (yyvsp[0].exprval).temp);
+    } else {
+        printf("Semantic Error: Invalid operand types for 'or' (must be bool)\n");
+        (yyval.exprval).type = 5;
+        (yyval.exprval).temp = strdup("");
+        (yyval.exprval).code = strdup("");
+    }
+}
+#line 1830 "part3.tab.c"
+    break;
+
+  case 51: /* expr: IDENTIFIER OPENPAREN arg_list CLOSEPAREN  */
+#line 459 "part3.y"
+                                           {
+    int found = 0;
+    int paramc = 0;
+    int argc = count_args((yyvsp[-1].str));
+    for (int i = 0; i < function_count; ++i) {
+        if (strcmp(function_names[i], (yyvsp[-3].str)) == 0) {
+            found = 1;
+            paramc = function_param_count[i];
+            break;
+        }
+    }
+    if (!found) {
+        printf("Semantic Error: Call to undefined function: %s\n", (yyvsp[-3].str));
+    } else if (argc > paramc) {
+        printf("Semantic Error: Too many arguments in call to function: %s\n", (yyvsp[-3].str));
+    }
+    (yyval.exprval).type = 0; // ברירת מחדל int
+    (yyval.exprval).temp = strdup("");
+}
+#line 1854 "part3.tab.c"
+    break;
+
+  case 52: /* expr: OPENPAREN expr CLOSEPAREN  */
+#line 478 "part3.y"
+                            {
+    if ((yyvsp[-1].exprval).temp == NULL) (yyvsp[-1].exprval).temp = strdup("");
+    (yyval.exprval).type = (yyvsp[-1].exprval).type;
+    (yyval.exprval).temp = (yyvsp[-1].exprval).temp;
+}
+#line 1864 "part3.tab.c"
+    break;
+
+  case 53: /* expr: expr LT expr  */
+#line 483 "part3.y"
+               {
+    if (((yyvsp[-2].exprval).type == 0 || (yyvsp[-2].exprval).type == 1) && ((yyvsp[0].exprval).type == 0 || (yyvsp[0].exprval).type == 1)) {
+        (yyval.exprval).type = 5;
+        (yyval.exprval).temp = new_temp();
+        asprintf(&(yyval.exprval).code, "%s%s%s = %s < %s\n", (yyvsp[-2].exprval).code, (yyvsp[0].exprval).code, (yyval.exprval).temp, (yyvsp[-2].exprval).temp, (yyvsp[0].exprval).temp);
+    } else {
+        printf("Semantic Error: Invalid operand types for '<' (must be int or float)\n");
+        (yyval.exprval).type = 5;
+        (yyval.exprval).temp = strdup("");
+        (yyval.exprval).code = strdup("");
+    }
+}
+#line 1881 "part3.tab.c"
+    break;
+
+  case 54: /* expr: expr LEQ expr  */
+#line 495 "part3.y"
+                {
+    if (((yyvsp[-2].exprval).type == 0 || (yyvsp[-2].exprval).type == 1) && ((yyvsp[0].exprval).type == 0 || (yyvsp[0].exprval).type == 1)) {
+        (yyval.exprval).type = 5;
+        (yyval.exprval).temp = new_temp();
+        asprintf(&(yyval.exprval).code, "%s%s%s = %s <= %s\n", (yyvsp[-2].exprval).code, (yyvsp[0].exprval).code, (yyval.exprval).temp, (yyvsp[-2].exprval).temp, (yyvsp[0].exprval).temp);
+    } else {
+        printf("Semantic Error: Invalid operand types for '<=' (must be int or float)\n");
+        (yyval.exprval).type = 5;
+        (yyval.exprval).temp = strdup("");
+        (yyval.exprval).code = strdup("");
+    }
+}
+#line 1898 "part3.tab.c"
+    break;
+
+  case 55: /* expr: expr GT expr  */
+#line 507 "part3.y"
+               {
+    if (((yyvsp[-2].exprval).type == 0 || (yyvsp[-2].exprval).type == 1) && ((yyvsp[0].exprval).type == 0 || (yyvsp[0].exprval).type == 1)) {
+        (yyval.exprval).type = 5;
+        (yyval.exprval).temp = new_temp();
+        asprintf(&(yyval.exprval).code, "%s%s%s = %s > %s\n", (yyvsp[-2].exprval).code, (yyvsp[0].exprval).code, (yyval.exprval).temp, (yyvsp[-2].exprval).temp, (yyvsp[0].exprval).temp);
+    } else {
+        printf("Semantic Error: Invalid operand types for '>' (must be int or float)\n");
+        (yyval.exprval).type = 5;
+        (yyval.exprval).temp = strdup("");
+        (yyval.exprval).code = strdup("");
+    }
+}
+#line 1915 "part3.tab.c"
+    break;
+
+  case 56: /* expr: expr GEQ expr  */
+#line 519 "part3.y"
+                {
+    if (((yyvsp[-2].exprval).type == 0 || (yyvsp[-2].exprval).type == 1) && ((yyvsp[0].exprval).type == 0 || (yyvsp[0].exprval).type == 1)) {
+        (yyval.exprval).type = 5;
+        (yyval.exprval).temp = new_temp();
+        asprintf(&(yyval.exprval).code, "%s%s%s = %s >= %s\n", (yyvsp[-2].exprval).code, (yyvsp[0].exprval).code, (yyval.exprval).temp, (yyvsp[-2].exprval).temp, (yyvsp[0].exprval).temp);
+    } else {
+        printf("Semantic Error: Invalid operand types for '>=' (must be int or float)\n");
+        (yyval.exprval).type = 5;
+        (yyval.exprval).temp = strdup("");
+        (yyval.exprval).code = strdup("");
+    }
+}
+#line 1932 "part3.tab.c"
+    break;
+
+  case 57: /* arg_list: expr  */
+#line 533 "part3.y"
+               {
+    if ((yyvsp[0].exprval).temp == NULL) (yyvsp[0].exprval).temp = strdup("");
+    int len = strlen((yyvsp[0].exprval).temp) + 2;
+    (yyval.str) = malloc(len);
+    if (!(yyval.str)) {
+        printf("Error: malloc failed in arg_list (single)\n");
+        exit(1);
+    }
+    snprintf((yyval.str), len, "1");
+}
+#line 1947 "part3.tab.c"
+    break;
+
+  case 58: /* arg_list: expr COMMA arg_list  */
+#line 543 "part3.y"
+                      {
+    if ((yyvsp[-2].exprval).temp == NULL) (yyvsp[-2].exprval).temp = strdup("");
+    int len = strlen((yyvsp[0].str)) + 3; // $3 הוא str
+    (yyval.str) = malloc(len);
+    if (!(yyval.str)) {
+        printf("Error: malloc failed in arg_list (comma)\n");
+        exit(1);
+    }
+    snprintf((yyval.str), len, "1,%s", (yyvsp[0].str));
+}
+#line 1962 "part3.tab.c"
+    break;
+
+  case 59: /* arg_list: %empty  */
+#line 553 "part3.y"
               {
     (yyval.str) = strdup("");
+    if (!(yyval.str)) {
+        printf("Error: malloc failed in arg_list (empty)\n");
+        exit(1);
+    }
 }
-#line 1752 "part3.tab.c"
+#line 1974 "part3.tab.c"
     break;
 
 
-#line 1756 "part3.tab.c"
+#line 1978 "part3.tab.c"
 
       default: break;
     }
@@ -1945,12 +2167,15 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 414 "part3.y"
+#line 560 "part3.y"
 
 int main() {
     yyparse();
     if (!error_flag) {
-        // כאן נדפיס את קוד הביניים (3AC) בהמשך
+        for (int i = 0; i < tac_count; ++i) {
+            printf("%s\n", tac_lines[i]);
+            free(tac_lines[i]);
+        }
     }
     return 0;
 }

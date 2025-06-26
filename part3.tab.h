@@ -100,13 +100,19 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 117 "part3.y"
+#line 161 "part3.y"
 
     char* str;
     int ival;
-    int type; // 0=int, 1=float
+    int type;
+    char* code;
+    struct {
+        int type;
+        char* temp;
+        char* code;
+    } exprval;
 
-#line 110 "part3.tab.h"
+#line 116 "part3.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

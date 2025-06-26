@@ -111,6 +111,7 @@ int count_args(char* ids) {
 %type <str> arg_list
 %type <type> type
 %type <type> expr
+%type <type> condition
 %%
 program: function_list { printf("Parsing OK\n"); }
        ;
@@ -225,13 +226,7 @@ while_stmt: WHILE condition COLON OPENBRACE stmts CLOSEBRACE
 return_stmt: RETURN expr SEMICOLON
            ;
 
-condition: expr EQ expr
-         | expr NEQ expr
-         | expr LT expr
-         | expr GT expr
-         | expr LEQ expr
-         | expr GEQ expr
-         ;
+condition: expr { $$ = $1; }
 
 type: INT { $$ = 0; }
     | FLOAT { $$ = 1; }
@@ -330,6 +325,38 @@ expr: NUMBER { $$ = $1; }
         $$ = 0; // ברירת מחדל int
     }
     | OPENPAREN expr CLOSEPAREN { $$ = $2; }
+    | expr LT expr {
+        if (($1 == 0 || $1 == 1) && ($3 == 0 || $3 == 1)) {
+            $$ = 5;
+        } else {
+            printf("Semantic Error: Invalid operand types for '<' (must be int or float)\n");
+            $$ = 5;
+        }
+    }
+    | expr LEQ expr {
+        if (($1 == 0 || $1 == 1) && ($3 == 0 || $3 == 1)) {
+            $$ = 5;
+        } else {
+            printf("Semantic Error: Invalid operand types for '<=' (must be int or float)\n");
+            $$ = 5;
+        }
+    }
+    | expr GT expr {
+        if (($1 == 0 || $1 == 1) && ($3 == 0 || $3 == 1)) {
+            $$ = 5;
+        } else {
+            printf("Semantic Error: Invalid operand types for '>' (must be int or float)\n");
+            $$ = 5;
+        }
+    }
+    | expr GEQ expr {
+        if (($1 == 0 || $1 == 1) && ($3 == 0 || $3 == 1)) {
+            $$ = 5;
+        } else {
+            printf("Semantic Error: Invalid operand types for '>=' (must be int or float)\n");
+            $$ = 5;
+        }
+    }
     ;
 
 arg_list: expr {

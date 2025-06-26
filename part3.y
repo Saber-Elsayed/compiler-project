@@ -12,6 +12,7 @@ int function_param_count[MAX_FUNCS];
 int function_count = 0;
 #define MAX_VARS 100
 char* var_names[MAX_VARS];
+int var_types[MAX_VARS]; // 0 = int, 1 = float
 int var_count = 0;
 
 int add_function_name(const char* name, int param_count) {
@@ -35,14 +36,16 @@ void reset_var_table() {
     var_count = 0;
 }
 
-int add_var_name(const char* name) {
+int add_var_name(const char* name, int type) {
     for (int i = 0; i < var_count; ++i) {
         if (strcmp(var_names[i], name) == 0) {
             return 0; // קיים כבר
         }
     }
     if (var_count < MAX_VARS) {
-        var_names[var_count++] = strdup(name);
+        var_names[var_count] = strdup(name);
+        var_types[var_count] = type;
+        var_count++;
     }
     return 1; // נוסף בהצלחה
 }
@@ -54,6 +57,15 @@ int is_var_defined(const char* name) {
         }
     }
     return 0;
+}
+
+int get_var_type(const char* name) {
+    for (int i = 0; i < var_count; ++i) {
+        if (strcmp(var_names[i], name) == 0) {
+            return var_types[i];
+        }
+    }
+    return -1; // לא קיים
 }
 
 int count_params(char* ids) {
@@ -78,7 +90,8 @@ int count_args(char* ids) {
 %left PLUS MINUS
 %left MULT DIV
 %left EQ NEQ LT GT LEQ GEQ
-%token DEF MAIN FLOAT INT NUMBER
+%token DEF MAIN FLOAT INT STRING CHAR USTRING
+%token <type> NUMBER
 %token OPENPAREN CLOSEPAREN OPENBRACE CLOSEBRACE COLON ARROW SEMICOLON COMMA
 %token ASSIGN PLUS MINUS MULT DIV
 %token IF ELSE EQ NEQ LT GT LEQ GEQ
@@ -87,6 +100,7 @@ int count_args(char* ids) {
 %union {
     char* str;
     int ival;
+    int type; // 0=int, 1=float
 }
 %token <str> IDENTIFIER
 
@@ -94,6 +108,8 @@ int count_args(char* ids) {
 %type <str> decl
 %type <str> param_list
 %type <str> arg_list
+%type <type> type
+%type <type> expr
 %%
 program: function_list { printf("Parsing OK\n"); }
        ;
@@ -171,7 +187,7 @@ decl: type id_list SEMICOLON {
     char* ids = $2;
     char* token = strtok(ids, ",");
     while (token != NULL) {
-        if (!add_var_name(token)) {
+        if (!add_var_name(token, $1)) {
             printf("Semantic Error: Duplicate variable name: %s\n", token);
         }
         token = strtok(NULL, ",");
@@ -190,6 +206,12 @@ id_list: IDENTIFIER {
 assign_stmt: IDENTIFIER ASSIGN expr SEMICOLON {
     if (!is_var_defined($1)) {
         printf("Semantic Error: Use of undefined variable: %s\n", $1);
+    } else {
+        int var_type = get_var_type($1);
+        int expr_type = $3;
+        if (var_type != expr_type) {
+            printf("Semantic Error: Type mismatch in assignment to variable '%s'\n", $1);
+        }
     }
 }
 
@@ -210,20 +232,38 @@ condition: expr EQ expr
          | expr GEQ expr
          ;
 
-type: INT
-    | FLOAT
+type: INT { $$ = 0; }
+    | FLOAT { $$ = 1; }
+    | STRING { $$ = 2; }
+    | CHAR { $$ = 3; }
+    | USTRING { $$ = 4; }
     ;
 
-expr: NUMBER
+expr: NUMBER { $$ = $1; }
+    | STRING { $$ = 2; }
+    | CHAR { $$ = 3; }
+    | USTRING { $$ = 4; }
     | IDENTIFIER {
         if (!is_var_defined($1)) {
             printf("Semantic Error: Use of undefined variable: %s\n", $1);
+            $$ = 0; // ברירת מחדל
+        } else {
+            $$ = get_var_type($1);
         }
     }
-    | expr PLUS expr
-    | expr MINUS expr
-    | expr MULT expr
-    | expr DIV expr
+    | expr PLUS expr {
+        // חיבור מחרוזות/יוניקוד/מספרים
+        if ($1 == 2 && $3 == 2) $$ = 2;
+        else if ($1 == 4 && $3 == 4) $$ = 4;
+        else if (($1 == 2 && $3 == 4) || ($1 == 4 && $3 == 2)) $$ = 2; // string+ustring=>string
+        else if ($1 == 3 && $3 == 3) $$ = 2; // char+char=>string
+        else if ($1 == 0 && $3 == 0) $$ = 0;
+        else if ($1 == 1 || $3 == 1) $$ = 1;
+        else $$ = 0;
+    }
+    | expr MINUS expr { $$ = ($1 == 1 || $3 == 1) ? 1 : 0; }
+    | expr MULT expr { $$ = ($1 == 1 || $3 == 1) ? 1 : 0; }
+    | expr DIV expr { $$ = 1; }
     | IDENTIFIER OPENPAREN arg_list CLOSEPAREN {
         int found = 0;
         int paramc = 0;
@@ -240,8 +280,9 @@ expr: NUMBER
         } else if (argc > paramc) {
             printf("Semantic Error: Too many arguments in call to function: %s\n", $1);
         }
+        $$ = 0; // ברירת מחדל int
     }
-    | OPENPAREN expr CLOSEPAREN
+    | OPENPAREN expr CLOSEPAREN { $$ = $2; }
     ;
 
 arg_list: expr {

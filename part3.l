@@ -13,7 +13,8 @@
 "return"        { printf("LEX: %s\n", yytext); return RETURN; }
 "while"         { printf("LEX: %s\n", yytext); return WHILE; }
      [a-zA-Z_][a-zA-Z0-9_]*  { yylval.str = strdup(yytext); return IDENTIFIER; }
-[0-9]+(\.[0-9]+)? { printf("LEX: %s\n", yytext); return NUMBER; }
+[0-9]+\.[0-9]+    { yylval.type = 1; printf("LEX: %s\n", yytext); return NUMBER; }
+[0-9]+            { yylval.type = 0; printf("LEX: %s\n", yytext); return NUMBER; }
 "("             { printf("LEX: %s\n", yytext); return OPENPAREN; }
 ")"             { printf("LEX: %s\n", yytext); return CLOSEPAREN; }
 "{"             { printf("LEX: %s\n", yytext); return OPENBRACE; }
@@ -33,6 +34,9 @@
 "-"             { printf("LEX: %s\n", yytext); return MINUS; }
 "*"             { printf("LEX: %s\n", yytext); return MULT; }
 "/"             { printf("LEX: %s\n", yytext); return DIV; }
+"u"[\"]([^\"]|\\.)*[\"] { yylval.type = 4; printf("LEX: %s\n", yytext); return USTRING; }
+[\"]([^\"]|\\.)*[\"] { yylval.type = 2; printf("LEX: %s\n", yytext); return STRING; }
+[']([^']|\\.)['] { yylval.type = 3; printf("LEX: %s\n", yytext); return CHAR; }
 [ \t\n]+        ;
 .               { printf("Unknown: %s\n", yytext); }
 %%

@@ -1,6 +1,7 @@
 
 def foo(float x) -> int: {
     int a, b, a, b;
+    a="sss";
     a = 23;
     if a == 23:
         b = 10;

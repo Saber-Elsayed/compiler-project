@@ -14,6 +14,9 @@ int function_count = 0;
 char* var_names[MAX_VARS];
 int var_types[MAX_VARS]; // 0 = int, 1 = float
 int var_count = 0;
+int error_flag = 0;
+int temp_counter = 0;
+int label_counter = 0;
 
 int add_function_name(const char* name, int param_count) {
     for (int i = 0; i < function_count; ++i) {
@@ -84,6 +87,18 @@ int count_args(char* ids) {
         if (*p == ',') count++;
     }
     return count;
+}
+
+char* new_temp() {
+    char* buf = malloc(10);
+    sprintf(buf, "t%d", temp_counter++);
+    return buf;
+}
+
+char* new_label() {
+    char* buf = malloc(10);
+    sprintf(buf, "L%d", ++label_counter);
+    return buf;
 }
 %}
 
@@ -399,6 +414,9 @@ arg_list: expr {
 %%
 int main() {
     yyparse();
+    if (!error_flag) {
+        // כאן נדפיס את קוד הביניים (3AC) בהמשך
+    }
     return 0;
 }
 

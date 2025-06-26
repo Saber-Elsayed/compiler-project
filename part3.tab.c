@@ -84,6 +84,9 @@ int function_count = 0;
 char* var_names[MAX_VARS];
 int var_types[MAX_VARS]; // 0 = int, 1 = float
 int var_count = 0;
+int error_flag = 0;
+int temp_counter = 0;
+int label_counter = 0;
 
 int add_function_name(const char* name, int param_count) {
     for (int i = 0; i < function_count; ++i) {
@@ -156,7 +159,19 @@ int count_args(char* ids) {
     return count;
 }
 
-#line 160 "part3.tab.c"
+char* new_temp() {
+    char* buf = malloc(10);
+    sprintf(buf, "t%d", temp_counter++);
+    return buf;
+}
+
+char* new_label() {
+    char* buf = malloc(10);
+    sprintf(buf, "L%d", ++label_counter);
+    return buf;
+}
+
+#line 175 "part3.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -632,13 +647,13 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   117,   117,   120,   121,   124,   134,   147,   155,   168,
-     169,   170,   173,   174,   177,   178,   181,   182,   183,   184,
-     185,   186,   189,   200,   203,   209,   221,   222,   224,   227,
-     230,   232,   233,   234,   235,   236,   237,   240,   241,   242,
-     243,   244,   245,   246,   254,   262,   270,   278,   294,   302,
-     310,   318,   326,   334,   352,   353,   361,   369,   377,   387,
-     391,   396
+       0,   132,   132,   135,   136,   139,   149,   162,   170,   183,
+     184,   185,   188,   189,   192,   193,   196,   197,   198,   199,
+     200,   201,   204,   215,   218,   224,   236,   237,   239,   242,
+     245,   247,   248,   249,   250,   251,   252,   255,   256,   257,
+     258,   259,   260,   261,   269,   277,   285,   293,   309,   317,
+     325,   333,   341,   349,   367,   368,   376,   384,   392,   402,
+     406,   411
 };
 #endif
 
@@ -1296,13 +1311,13 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* program: function_list  */
-#line 117 "part3.y"
+#line 132 "part3.y"
                        { printf("Parsing OK\n"); }
-#line 1302 "part3.tab.c"
+#line 1317 "part3.tab.c"
     break;
 
   case 5: /* function: DEF IDENTIFIER OPENPAREN param_list CLOSEPAREN ARROW type COLON OPENBRACE stmts CLOSEBRACE  */
-#line 124 "part3.y"
+#line 139 "part3.y"
                                                                                                      {
     reset_var_table();
     int paramc = count_params((yyvsp[-7].str));
@@ -1313,11 +1328,11 @@ yyreduce:
         printf("Semantic Error: Duplicate function name: %s\n", (yyvsp[-9].str));
     }
 }
-#line 1317 "part3.tab.c"
+#line 1332 "part3.tab.c"
     break;
 
   case 6: /* function: DEF IDENTIFIER OPENPAREN CLOSEPAREN COLON OPENBRACE stmts CLOSEBRACE  */
-#line 134 "part3.y"
+#line 149 "part3.y"
                                                                        {
     reset_var_table();
     int paramc = 0;
@@ -1331,11 +1346,11 @@ yyreduce:
         printf("Semantic Error: Duplicate function name: %s\n", (yyvsp[-6].str));
     }
 }
-#line 1335 "part3.tab.c"
+#line 1350 "part3.tab.c"
     break;
 
   case 7: /* function: DEF MAIN OPENPAREN param_list CLOSEPAREN ARROW type COLON OPENBRACE stmts CLOSEBRACE  */
-#line 147 "part3.y"
+#line 162 "part3.y"
                                                                                        {
     reset_var_table();
     int paramc = count_params((yyvsp[-7].str));
@@ -1344,11 +1359,11 @@ yyreduce:
         printf("Semantic Error: Duplicate function name: main\n");
     }
 }
-#line 1348 "part3.tab.c"
+#line 1363 "part3.tab.c"
     break;
 
   case 8: /* function: DEF MAIN OPENPAREN CLOSEPAREN COLON OPENBRACE stmts CLOSEBRACE  */
-#line 155 "part3.y"
+#line 170 "part3.y"
                                                                  {
     reset_var_table();
     int paramc = 0;
@@ -1360,11 +1375,11 @@ yyreduce:
         printf("Semantic Error: Duplicate function name: main\n");
     }
 }
-#line 1364 "part3.tab.c"
+#line 1379 "part3.tab.c"
     break;
 
   case 22: /* decl: type id_list SEMICOLON  */
-#line 189 "part3.y"
+#line 204 "part3.y"
                              {
     char* ids = (yyvsp[-1].str);
     char* token = strtok(ids, ",");
@@ -1375,29 +1390,29 @@ yyreduce:
         token = strtok(NULL, ",");
     }
 }
-#line 1379 "part3.tab.c"
+#line 1394 "part3.tab.c"
     break;
 
   case 23: /* id_list: IDENTIFIER  */
-#line 200 "part3.y"
+#line 215 "part3.y"
                     {
     (yyval.str) = strdup((yyvsp[0].str));
 }
-#line 1387 "part3.tab.c"
+#line 1402 "part3.tab.c"
     break;
 
   case 24: /* id_list: IDENTIFIER COMMA id_list  */
-#line 203 "part3.y"
+#line 218 "part3.y"
                            {
     int len = strlen((yyvsp[-2].str)) + strlen((yyvsp[0].str)) + 2;
     (yyval.str) = malloc(len);
     snprintf((yyval.str), len, "%s,%s", (yyvsp[-2].str), (yyvsp[0].str));
 }
-#line 1397 "part3.tab.c"
+#line 1412 "part3.tab.c"
     break;
 
   case 25: /* assign_stmt: IDENTIFIER ASSIGN expr SEMICOLON  */
-#line 209 "part3.y"
+#line 224 "part3.y"
                                               {
     if (!is_var_defined((yyvsp[-3].str))) {
         printf("Semantic Error: Use of undefined variable: %s\n", (yyvsp[-3].str));
@@ -1409,89 +1424,89 @@ yyreduce:
         }
     }
 }
-#line 1413 "part3.tab.c"
+#line 1428 "part3.tab.c"
     break;
 
   case 30: /* condition: expr  */
-#line 230 "part3.y"
+#line 245 "part3.y"
                 { (yyval.type) = (yyvsp[0].type); }
-#line 1419 "part3.tab.c"
+#line 1434 "part3.tab.c"
     break;
 
   case 31: /* type: INT  */
-#line 232 "part3.y"
+#line 247 "part3.y"
           { (yyval.type) = 0; }
-#line 1425 "part3.tab.c"
+#line 1440 "part3.tab.c"
     break;
 
   case 32: /* type: FLOAT  */
-#line 233 "part3.y"
+#line 248 "part3.y"
             { (yyval.type) = 1; }
-#line 1431 "part3.tab.c"
+#line 1446 "part3.tab.c"
     break;
 
   case 33: /* type: STRING  */
-#line 234 "part3.y"
+#line 249 "part3.y"
              { (yyval.type) = 2; }
-#line 1437 "part3.tab.c"
+#line 1452 "part3.tab.c"
     break;
 
   case 34: /* type: CHAR  */
-#line 235 "part3.y"
+#line 250 "part3.y"
            { (yyval.type) = 3; }
-#line 1443 "part3.tab.c"
+#line 1458 "part3.tab.c"
     break;
 
   case 35: /* type: USTRING  */
-#line 236 "part3.y"
+#line 251 "part3.y"
               { (yyval.type) = 4; }
-#line 1449 "part3.tab.c"
+#line 1464 "part3.tab.c"
     break;
 
   case 36: /* type: BOOL  */
-#line 237 "part3.y"
+#line 252 "part3.y"
            { (yyval.type) = 5; }
-#line 1455 "part3.tab.c"
+#line 1470 "part3.tab.c"
     break;
 
   case 37: /* expr: NUMBER  */
-#line 240 "part3.y"
+#line 255 "part3.y"
              { (yyval.type) = (yyvsp[0].type); }
-#line 1461 "part3.tab.c"
+#line 1476 "part3.tab.c"
     break;
 
   case 38: /* expr: STRING  */
-#line 241 "part3.y"
+#line 256 "part3.y"
              { (yyval.type) = 2; }
-#line 1467 "part3.tab.c"
+#line 1482 "part3.tab.c"
     break;
 
   case 39: /* expr: CHAR  */
-#line 242 "part3.y"
+#line 257 "part3.y"
            { (yyval.type) = 3; }
-#line 1473 "part3.tab.c"
+#line 1488 "part3.tab.c"
     break;
 
   case 40: /* expr: USTRING  */
-#line 243 "part3.y"
+#line 258 "part3.y"
               { (yyval.type) = 4; }
-#line 1479 "part3.tab.c"
+#line 1494 "part3.tab.c"
     break;
 
   case 41: /* expr: TRUE  */
-#line 244 "part3.y"
+#line 259 "part3.y"
            { (yyval.type) = 5; }
-#line 1485 "part3.tab.c"
+#line 1500 "part3.tab.c"
     break;
 
   case 42: /* expr: FALSE  */
-#line 245 "part3.y"
+#line 260 "part3.y"
             { (yyval.type) = 5; }
-#line 1491 "part3.tab.c"
+#line 1506 "part3.tab.c"
     break;
 
   case 43: /* expr: IDENTIFIER  */
-#line 246 "part3.y"
+#line 261 "part3.y"
                  {
         if (!is_var_defined((yyvsp[0].str))) {
             printf("Semantic Error: Use of undefined variable: %s\n", (yyvsp[0].str));
@@ -1500,11 +1515,11 @@ yyreduce:
             (yyval.type) = get_var_type((yyvsp[0].str));
         }
     }
-#line 1504 "part3.tab.c"
+#line 1519 "part3.tab.c"
     break;
 
   case 44: /* expr: expr EQ expr  */
-#line 254 "part3.y"
+#line 269 "part3.y"
                    {
         if ((yyvsp[-2].type) == (yyvsp[0].type)) {
             (yyval.type) = 5;
@@ -1513,11 +1528,11 @@ yyreduce:
             (yyval.type) = 5;
         }
     }
-#line 1517 "part3.tab.c"
+#line 1532 "part3.tab.c"
     break;
 
   case 45: /* expr: expr NEQ expr  */
-#line 262 "part3.y"
+#line 277 "part3.y"
                     {
         if ((yyvsp[-2].type) == (yyvsp[0].type)) {
             (yyval.type) = 5;
@@ -1526,11 +1541,11 @@ yyreduce:
             (yyval.type) = 5;
         }
     }
-#line 1530 "part3.tab.c"
+#line 1545 "part3.tab.c"
     break;
 
   case 46: /* expr: NOT expr  */
-#line 270 "part3.y"
+#line 285 "part3.y"
                {
         if ((yyvsp[0].type) == 5) {
             (yyval.type) = 5;
@@ -1539,11 +1554,11 @@ yyreduce:
             (yyval.type) = 5;
         }
     }
-#line 1543 "part3.tab.c"
+#line 1558 "part3.tab.c"
     break;
 
   case 47: /* expr: expr PLUS expr  */
-#line 278 "part3.y"
+#line 293 "part3.y"
                      {
         if (((yyvsp[-2].type) == 0 || (yyvsp[-2].type) == 1) && ((yyvsp[0].type) == 0 || (yyvsp[0].type) == 1)) {
             (yyval.type) = ((yyvsp[-2].type) == 0 && (yyvsp[0].type) == 0) ? 0 : 1;
@@ -1560,11 +1575,11 @@ yyreduce:
             (yyval.type) = 0;
         }
     }
-#line 1564 "part3.tab.c"
+#line 1579 "part3.tab.c"
     break;
 
   case 48: /* expr: expr MINUS expr  */
-#line 294 "part3.y"
+#line 309 "part3.y"
                       {
         if (((yyvsp[-2].type) == 0 || (yyvsp[-2].type) == 1) && ((yyvsp[0].type) == 0 || (yyvsp[0].type) == 1)) {
             (yyval.type) = ((yyvsp[-2].type) == 0 && (yyvsp[0].type) == 0) ? 0 : 1;
@@ -1573,11 +1588,11 @@ yyreduce:
             (yyval.type) = 0;
         }
     }
-#line 1577 "part3.tab.c"
+#line 1592 "part3.tab.c"
     break;
 
   case 49: /* expr: expr MULT expr  */
-#line 302 "part3.y"
+#line 317 "part3.y"
                      {
         if (((yyvsp[-2].type) == 0 || (yyvsp[-2].type) == 1) && ((yyvsp[0].type) == 0 || (yyvsp[0].type) == 1)) {
             (yyval.type) = ((yyvsp[-2].type) == 0 && (yyvsp[0].type) == 0) ? 0 : 1;
@@ -1586,11 +1601,11 @@ yyreduce:
             (yyval.type) = 0;
         }
     }
-#line 1590 "part3.tab.c"
+#line 1605 "part3.tab.c"
     break;
 
   case 50: /* expr: expr DIV expr  */
-#line 310 "part3.y"
+#line 325 "part3.y"
                     {
         if (((yyvsp[-2].type) == 0 || (yyvsp[-2].type) == 1) && ((yyvsp[0].type) == 0 || (yyvsp[0].type) == 1)) {
             (yyval.type) = 1; // חילוק תמיד מחזיר float
@@ -1599,11 +1614,11 @@ yyreduce:
             (yyval.type) = 1;
         }
     }
-#line 1603 "part3.tab.c"
+#line 1618 "part3.tab.c"
     break;
 
   case 51: /* expr: expr AND expr  */
-#line 318 "part3.y"
+#line 333 "part3.y"
                     {
         if ((yyvsp[-2].type) == 5 && (yyvsp[0].type) == 5) {
             (yyval.type) = 5;
@@ -1612,11 +1627,11 @@ yyreduce:
             (yyval.type) = 5;
         }
     }
-#line 1616 "part3.tab.c"
+#line 1631 "part3.tab.c"
     break;
 
   case 52: /* expr: expr OR expr  */
-#line 326 "part3.y"
+#line 341 "part3.y"
                    {
         if ((yyvsp[-2].type) == 5 && (yyvsp[0].type) == 5) {
             (yyval.type) = 5;
@@ -1625,11 +1640,11 @@ yyreduce:
             (yyval.type) = 5;
         }
     }
-#line 1629 "part3.tab.c"
+#line 1644 "part3.tab.c"
     break;
 
   case 53: /* expr: IDENTIFIER OPENPAREN arg_list CLOSEPAREN  */
-#line 334 "part3.y"
+#line 349 "part3.y"
                                                {
         int found = 0;
         int paramc = 0;
@@ -1648,17 +1663,17 @@ yyreduce:
         }
         (yyval.type) = 0; // ברירת מחדל int
     }
-#line 1652 "part3.tab.c"
+#line 1667 "part3.tab.c"
     break;
 
   case 54: /* expr: OPENPAREN expr CLOSEPAREN  */
-#line 352 "part3.y"
+#line 367 "part3.y"
                                 { (yyval.type) = (yyvsp[-1].type); }
-#line 1658 "part3.tab.c"
+#line 1673 "part3.tab.c"
     break;
 
   case 55: /* expr: expr LT expr  */
-#line 353 "part3.y"
+#line 368 "part3.y"
                    {
         if (((yyvsp[-2].type) == 0 || (yyvsp[-2].type) == 1) && ((yyvsp[0].type) == 0 || (yyvsp[0].type) == 1)) {
             (yyval.type) = 5;
@@ -1667,11 +1682,11 @@ yyreduce:
             (yyval.type) = 5;
         }
     }
-#line 1671 "part3.tab.c"
+#line 1686 "part3.tab.c"
     break;
 
   case 56: /* expr: expr LEQ expr  */
-#line 361 "part3.y"
+#line 376 "part3.y"
                     {
         if (((yyvsp[-2].type) == 0 || (yyvsp[-2].type) == 1) && ((yyvsp[0].type) == 0 || (yyvsp[0].type) == 1)) {
             (yyval.type) = 5;
@@ -1680,11 +1695,11 @@ yyreduce:
             (yyval.type) = 5;
         }
     }
-#line 1684 "part3.tab.c"
+#line 1699 "part3.tab.c"
     break;
 
   case 57: /* expr: expr GT expr  */
-#line 369 "part3.y"
+#line 384 "part3.y"
                    {
         if (((yyvsp[-2].type) == 0 || (yyvsp[-2].type) == 1) && ((yyvsp[0].type) == 0 || (yyvsp[0].type) == 1)) {
             (yyval.type) = 5;
@@ -1693,11 +1708,11 @@ yyreduce:
             (yyval.type) = 5;
         }
     }
-#line 1697 "part3.tab.c"
+#line 1712 "part3.tab.c"
     break;
 
   case 58: /* expr: expr GEQ expr  */
-#line 377 "part3.y"
+#line 392 "part3.y"
                     {
         if (((yyvsp[-2].type) == 0 || (yyvsp[-2].type) == 1) && ((yyvsp[0].type) == 0 || (yyvsp[0].type) == 1)) {
             (yyval.type) = 5;
@@ -1706,38 +1721,38 @@ yyreduce:
             (yyval.type) = 5;
         }
     }
-#line 1710 "part3.tab.c"
+#line 1725 "part3.tab.c"
     break;
 
   case 59: /* arg_list: expr  */
-#line 387 "part3.y"
+#line 402 "part3.y"
                {
     (yyval.str) = strdup("");
     strcat((yyval.str), "1");
 }
-#line 1719 "part3.tab.c"
+#line 1734 "part3.tab.c"
     break;
 
   case 60: /* arg_list: expr COMMA arg_list  */
-#line 391 "part3.y"
+#line 406 "part3.y"
                       {
     (yyval.str) = strdup("");
     strcat((yyval.str), "1,");
     strcat((yyval.str), (yyvsp[0].str));
 }
-#line 1729 "part3.tab.c"
+#line 1744 "part3.tab.c"
     break;
 
   case 61: /* arg_list: %empty  */
-#line 396 "part3.y"
+#line 411 "part3.y"
               {
     (yyval.str) = strdup("");
 }
-#line 1737 "part3.tab.c"
+#line 1752 "part3.tab.c"
     break;
 
 
-#line 1741 "part3.tab.c"
+#line 1756 "part3.tab.c"
 
       default: break;
     }
@@ -1930,10 +1945,13 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 399 "part3.y"
+#line 414 "part3.y"
 
 int main() {
     yyparse();
+    if (!error_flag) {
+        // כאן נדפיס את קוד הביניים (3AC) בהמשך
+    }
     return 0;
 }
 
